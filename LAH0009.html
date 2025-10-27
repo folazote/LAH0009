@@ -1,0 +1,4632 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimiseur d'Équipement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filters-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stats-priority-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-priority-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .stat-priority-item:has(input:checked) {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .stat-priority-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .stat-priority-item label {
+            flex: 1;
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        .priority-select {
+            width: 110px;
+            padding: 6px 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.85em;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .priority-select:enabled {
+            border-color: #667eea;
+            cursor: pointer;
+        }
+
+        .priority-select:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .priority-select:enabled:hover {
+            border-color: #764ba2;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .equipment-slot {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .equipment-slot h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .equipment-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .equipment-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .tech-points {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .kit-list {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+
+        .kit-item {
+            padding: 8px;
+            background: #fff;
+            border-left: 3px solid #667eea;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .stats-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .stats-summary h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-name {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .disabled-row {
+            opacity: 0.5;
+            background: #fafafa;
+        }
+
+        .disabled-row:hover {
+            background: #f0f0f0;
+        }
+
+        .race-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #764ba2;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        .slot-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 LAH-0009 🤖</h1>
+            <p>J'optimise vos combinaisons armure-kit selon vos besoins !</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('optimizer')">Optimisation</button>
+            <button class="tab" onclick="showTab('equipments')">Base Équipements</button>
+            <button class="tab" onclick="showTab('kits')">Base Kits</button>
+        </div>
+
+        <!-- Onglet Optimiseur -->
+        <div id="optimizer" class="tab-content active">
+            <div class="filters-section">
+                <h2 style="margin-bottom: 20px; color: #667eea;">⚙️ Questionnaire à remplir</h2>
+
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="race-select">Votre race</label>
+                        <select id="race-select">
+                            <option value="humain" selected>Humain</option>
+                            <option value="elfe">Elfe</option>
+                            <option value="nain">Nain</option>
+                            <option value="troll">Troll</option>
+                            <option value="orc">Orc</option>
+                            <option value="outrilien">Outrilien</option>
+                            <option value="kobold">Kobold</option>
+                            <option value="gnoll">Gnoll</option>
+                            <option value="androide">Androïde</option>
+                            <option value="gobelin">Gobelin</option>
+                            <option value="vautour">Vautour</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="status-select">Votre statut</label>
+                        <select id="status-select">
+                            <option value="Anti-Citoyen">Anti-Citoyen</option>
+                            <option value="Résident">Résident</option>
+                            <option value="Citoyen" selected>Citoyen</option>
+                            <option value="Noble">Noble</option>
+                            <option value="Haut-Dignitaire">Haut-Dignitaire</option>
+                            <option value="Délégué Impérial">Délégué Impérial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Vos UBA natives</label>
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em;">
+                        ⚠️ <strong>Important :</strong> Saisissez vos UBA de base <strong>SANS</strong> kits ni équipements. 
+                        Certains équipements nécessitent un minimum d'UBA natives pour être portés.
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                        <div>
+                            <label style="font-size: 0.9em;">💪 Force</label>
+                            <input type="number" id="native-force" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">🤸 Agilité</label>
+                            <input type="number" id="native-agilite" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">🛡️ Résistance</label>
+                            <input type="number" id="native-resistance" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">👁️ Perception</label>
+                            <input type="number" id="native-perception" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">🥷 Furtivité</label>
+                            <input type="number" id="native-furtivite" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">💻 Informatique</label>
+                            <input type="number" id="native-informatique" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">⚕️ Médecine</label>
+                            <input type="number" id="native-medecine" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.9em;">🔧 Ingénierie</label>
+                            <input type="number" id="native-ingenierie" min="0" max="100" value="0" style="width: 100%; padding: 5px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Vos implants (sélectionnez ceux que vous possédez)</label>
+                    <div class="stats-checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-genie" value="Génie">
+                            <label for="talent-genie">Génie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-scientifique" value="Scientifique">
+                            <label for="talent-scientifique">Scientifique</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-sain" value="Sain et Sauf">
+                            <label for="talent-sain">Sain et Sauf</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-geek" value="Geek">
+                            <label for="talent-geek">Geek</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-urgentiste" value="Urgentiste">
+                            <label for="talent-urgentiste">Urgentiste</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-peau" value="Peau d'Argent">
+                            <label for="talent-peau">Peau d'Argent</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-ingenieur" value="Ingénieur">
+                            <label for="talent-ingenieur">Ingénieur</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-brute" value="Brute">
+                            <label for="talent-brute">Brute</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-rodeur" value="Rôdeur">
+                            <label for="talent-rodeur">Rôdeur</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-felin" value="Félin">
+                            <label for="talent-felin">Félin</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="talent-polyvalent" value="Polyvalent">
+                            <label for="talent-polyvalent">Polyvalent</label>
+                        </div>
+                    </div>
+                </div>
+
+
+                                <div class="filter-group">
+                    <label>Appartenez-vous à l'une de ces institutions ?</label>
+                    <div class="stats-checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="inst-none" value="Aucune" onchange="handleInstitutionNone()">
+                            <label for="inst-none">Aucune des deux</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="inst-dreadcast" value="DreadCast Network" onchange="handleInstitutionChange()">
+                            <label for="inst-dreadcast">DreadCast Network</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="inst-orient" value="Cercle de l'Orient" onchange="handleInstitutionChange()">
+                            <label for="inst-orient">Cercle de l'Orient</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Vos titres (sélectionnez ceux que vous possédez)</label>
+                    <div class="stats-checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="title-vu" value="J'en ai vu d'autres">
+                            <label for="title-vu">J'en ai vu d'autres</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="title-collec" value="Collectionneur de cadavres">
+                            <label for="title-collec">Collectionneur de cadavres</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="title-battre" value="Tu veux t'battre ?">
+                            <label for="title-battre">Tu veux t'battre ?</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Vos accomplissements (sélectionnez vos paliers atteints)</label>
+                    <div style="margin-bottom: 10px; color: #666; font-size: 0.9em;">
+                        💡 Si vous avez un palier élevé, vous pouvez aussi utiliser les kits des paliers inférieurs
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="accomp-technicien">Technicien</label>
+                            <select id="accomp-technicien">
+                                <option value="0">Aucun</option>
+                                <option value="1">Débutant</option>
+                                <option value="2">Initié</option>
+                                <option value="3">Habitué</option>
+                                <option value="4">Expérimenté</option>
+                                <option value="5">Confirmé</option>
+                                <option value="6">Expert</option>
+                                <option value="7">Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="accomp-directeur">Directeur</label>
+                            <select id="accomp-directeur">
+                                <option value="0">Aucun</option>
+                                <option value="1">Débutant</option>
+                                <option value="2">Initié</option>
+                                <option value="3">Habitué</option>
+                                <option value="4">Expérimenté</option>
+                                <option value="5">Confirmé</option>
+                                <option value="6">Expert</option>
+                                <option value="7">Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="accomp-vendeur">Vendeur</label>
+                            <select id="accomp-vendeur">
+                                <option value="0">Aucun</option>
+                                <option value="1">Débutant</option>
+                                <option value="2">Initié</option>
+                                <option value="3">Habitué</option>
+                                <option value="4">Expérimenté</option>
+                                <option value="5">Confirmé</option>
+                                <option value="6">Expert</option>
+                                <option value="7">Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="accomp-fidele">Fidèle</label>
+                            <select id="accomp-fidele">
+                                <option value="0">Aucun</option>
+                                <option value="1">Débutant</option>
+                                <option value="2">Initié</option>
+                                <option value="3">Habitué</option>
+                                <option value="4">Expérimenté</option>
+                                <option value="5">Confirmé</option>
+                                <option value="6">Expert</option>
+                                <option value="7">Légendaire</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="accomp-fantassin">Fantassin</label>
+                            <select id="accomp-fantassin">
+                                <option value="0">Aucun</option>
+                                <option value="1">Débutant</option>
+                                <option value="2">Initié</option>
+                                <option value="3">Habitué</option>
+                                <option value="4">Expérimenté</option>
+                                <option value="5">Confirmé</option>
+                                <option value="6">Expert</option>
+                                <option value="7">Légendaire</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                <div class="filter-group">
+                    <label>Vos UBA recherchées (sélectionnez et définissez la priorité)</label>
+                    <div style="margin-bottom: 10px; color: #666; font-size: 0.9em;">
+                        💡 Plus la priorité est élevée, plus j'optimiserai cette UBA
+                    </div>
+                    <div class="stats-priority-grid">
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-force" value="force">
+                            <label for="stat-force">💪 Force</label>
+                            <select id="priority-force" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-agilite" value="agilite">
+                            <label for="stat-agilite">🤸 Agilité</label>
+                            <select id="priority-agilite" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-resistance" value="resistance">
+                            <label for="stat-resistance">🛡️ Résistance</label>
+                            <select id="priority-resistance" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-perception" value="perception">
+                            <label for="stat-perception">👁️ Perception</label>
+                            <select id="priority-perception" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-furtivite" value="furtivite">
+                            <label for="stat-furtivite">🥷 Furtivité</label>
+                            <select id="priority-furtivite" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-informatique" value="informatique">
+                            <label for="stat-informatique">💻 Informatique</label>
+                            <select id="priority-informatique" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-medecine" value="medecine">
+                            <label for="stat-medecine">⚕️ Médecine</label>
+                            <select id="priority-medecine" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-ingenierie" value="ingenierie">
+                            <label for="stat-ingenierie">🔧 Ingénierie</label>
+                            <select id="priority-ingenierie" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-sante" value="sante">
+                            <label for="stat-sante">❤️ Santé</label>
+                            <select id="priority-sante" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-forme" value="forme">
+                            <label for="stat-forme">🏃 Forme</label>
+                            <select id="priority-forme" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                        <div class="stat-priority-item">
+                            <input type="checkbox" id="stat-vitesse" value="vitesse">
+                            <label for="stat-vitesse">⚡ Vitesse</label>
+                            <select id="priority-vitesse" class="priority-select" disabled>
+                                <option value="1">Basse</option>
+                                <option value="2" selected>Normale</option>
+                                <option value="3">Élevée</option>
+                                <option value="4">Maximale</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="optimizeEquipment()" style="margin-top: 20px;">🔍 Optimiser l'équipement</button>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📊 Résultats de l'optimisation</h2>
+                <div id="optimization-results"></div>
+                <div id="stats-summary" class="stats-summary"></div>
+            </div>
+        </div>
+
+        <!-- Onglet Base Équipements -->
+        <div id="equipments" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #667eea;">🛡️ Base de données des équipements</h2>
+            <div id="equipments-table"></div>
+        </div>
+
+        <!-- Onglet Base Kits -->
+        <div id="kits" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #667eea;">🔧 Base de données des kits</h2>
+            <div id="kits-table"></div>
+        </div>
+    </div>
+
+    <script>
+        // BASE DE DONNÉES (À MODIFIER SELON VOS BESOINS)
+        
+        // Équipements disponibles
+        const equipments = [
+            {
+                id: 1,
+                name: "Cosmo ou Cosmopolitain / Cosmo étanche / Cosmo velour",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"force": 50, "agilite": 50}
+            },
+            {
+                id: 2,
+                name: "Cuirasse",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {"agilite": -15, "resistance": 25},
+                nativeStatsRequired: {"force": 120, "resistance": 160}
+            },
+            {
+                id: 3,
+                name: "Manteau Anapurnol bleu ou Manteau Anapurno marron ou Cosmo Velours ou Cosmo Etanche ou Vest Rad' (F) ou Vest Rad' (H)",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"force": 50, "agilite": 50}
+            },
+            {
+                id: 4,
+                name: "Soutien-Gorge Connecté",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"informatique": 50}
+            },
+            {
+                id: 5,
+                name: "Sweat",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 6,
+                name: "Exo-Buste de Chantier (F) ou Exo-Buste de Chantier (H) ou Veste à Poches",
+                slot: "buste",
+                techPoints: 360,
+                premium: false,
+                stats: {"ingenierie": 4},
+                nativeStatsRequired: {"ingenierie": 30}
+            },
+            {
+                id: 7,
+                name: "Trench-Coat",
+                slot: "buste",
+                techPoints: 360,
+                premium: false,
+                stats: {"resistance": 4, "furtivite": 4},
+                nativeStatsRequired: {"resistance": 50}
+            },
+            {
+                id: 8,
+                name: "✤ Armure ø-ING-001",
+                slot: "buste",
+                techPoints: 360,
+                premium: false,
+                stats: {"ingenierie": 14}
+            },
+            {
+                id: 9,
+                name: "Armure Ancienne",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 5, "agilite": -10, "resistance": 10},
+                nativeStatsRequired: {"force": 120, "resistance": 120}
+            },
+            {
+                id: 10,
+                name: "Blouson bleu ou Blouson vert ou Blouson rouge ou Blouson noir ou Veste décontractée",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": 5}
+            },
+            {
+                id: 11,
+                name: "Débardeur ou Débardeur long ou Débardeur Blanc ou Débardeur Otis ou Débardeur Squidzilla ou Débardeur Raskal ou Débardeur C.Com ou Débardeur Utopia ou Débardeur Engrenage ou Débardeur 3.14 ou Débardeur Onix ou Débardeur Sénéchal",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": 5, "resistance": -5}
+            },
+            {
+                id: 12,
+                name: "Manteau Muyang ou Robe Rubanée",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"furtivite": -10}
+            },
+            {
+                id: 13,
+                name: "Mini Robe",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"agilite": 60}
+            },
+            {
+                id: 14,
+                name: "Kevlar ou Robe Carbone",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"resistance": 10},
+                nativeStatsRequired: {"force": 60, "resistance": 60}
+            },
+            {
+                id: 15,
+                name: "✤ Armure ø-FO-001",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 15, "agilite": 3}
+            },
+            {
+                id: 16,
+                name: "✤ Armure ø-INF-001",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 18}
+            },
+            {
+                id: 17,
+                name: "✤ Armure ø-MED-001",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 24, "furtivite": -12}
+            },
+            {
+                id: 18,
+                name: "Blouse Blanche",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 6, "forme": 10}
+            },
+            {
+                id: 19,
+                name: "Chemisier",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 20,
+                name: "Chemise ou Débardeur Long ou Débardeur Seyant",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": 5, "resistance": -5}
+            },
+            {
+                id: 21,
+                name: "Cyber-Veste ou Cyber-Veste (H) ou Cyber-Veste (F)",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"agilite": 8, "informatique": 8},
+                nativeStatsRequired: {"informatique": 30}
+            },
+            {
+                id: 22,
+                name: "Veste de Cérémonie",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"force": -4, "agilite": 10}
+            },
+            {
+                id: 23,
+                name: "Veste Médicale (F) ou Veste Médicale (M)",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -12, "medecine": 14},
+                nativeStatsRequired: {"medecine": 30}
+            },
+            {
+                id: 24,
+                name: "Armure Tactique SI ou Armure de DreadBall",
+                slot: "buste",
+                techPoints: 300,
+                premium: false,
+                stats: {"agilite": -5, "resistance": 15},
+                nativeStatsRequired: {"force": 105, "resistance": 105}
+            },
+            {
+                id: 25,
+                name: "Haut de robe Néon ou Haut de robe rouge",
+                slot: "buste",
+                techPoints: 300,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"agilite": 60}
+            },
+            {
+                id: 26,
+                name: "Soutien-Gorge Ecureuil ou Soutien-Gorge Sexy",
+                slot: "buste",
+                techPoints: 250,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 27,
+                name: "Robe Fendue / Noire ou Veste Muyang",
+                slot: "buste",
+                techPoints: 250,
+                premium: false,
+                stats: {"furtivite": -10, "sante": 12}
+            },
+            {
+                id: 28,
+                name: "Combinaison Tech4",
+                slot: "buste",
+                techPoints: 200,
+                premium: false,
+                stats: {"agilite": -5, "perception": -5, "furtivite": -5, "ingenierie": 21},
+                nativeStatsRequired: {"ingenierie": 150}
+            },
+            {
+                id: 29,
+                name: "Costume ou Tailleur ou Costume Buss ou Tailleur Bijela",
+                slot: "buste",
+                techPoints: 200,
+                premium: false,
+                stats: {"informatique": 15}
+            },
+            {
+                id: 30,
+                name: "Gros Cuir ou Veste en cuir Marron ou Veste en cuir Noire",
+                slot: "buste",
+                techPoints: 150,
+                premium: false,
+                stats: {"resistance": 5},
+                nativeStatsRequired: {"agilite": 10, "resistance": 20}
+            },
+            {
+                id: 31,
+                name: "Tenue de prisonnier / de taulard",
+                slot: "buste",
+                techPoints: 120,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 32,
+                name: "Chemise d’éveil (H)/(F)",
+                slot: "buste",
+                techPoints: 60,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 33,
+                name: "Exo-Jambières",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"force": 60, "agilite": 100}
+            },
+            {
+                id: 34,
+                name: "Pantalon Eye ou Pantalon Miliaire ou Pantalon Cyber",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 35,
+                name: "String Connecté",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"informatique": 50}
+            },
+            {
+                id: 36,
+                name: "Jupe Muxo ou Short Standard",
+                slot: "jambes",
+                techPoints: 380,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 37,
+                name: "Pantalon de Chasseur ou Pantalon Keynes Mills",
+                slot: "jambes",
+                techPoints: 360,
+                premium: false,
+                stats: {"agilite": 4, "furtivite": 4}
+            },
+            {
+                id: 38,
+                name: "Pantalon de costume ou Pantalon Bijela ou Pantalon de tailleur",
+                slot: "jambes",
+                techPoints: 350,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 39,
+                name: "Bas Elegants",
+                slot: "jambes",
+                techPoints: 350,
+                premium: false,
+                stats: {"furtivite": -10}
+            },
+            {
+                id: 40,
+                name: "Short Sport ou Short Boxe / Boxe Gold",
+                slot: "jambes",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 2, "agilite": 2}
+            },
+            {
+                id: 41,
+                name: "Cyber-Futal",
+                slot: "jambes",
+                techPoints: 340,
+                premium: false,
+                stats: {"resistance": 6, "informatique": 6},
+                nativeStatsRequired: {"informatique": 30}
+            },
+            {
+                id: 42,
+                name: "Exo-Jambière de Chantier ou Pantalon à Poches",
+                slot: "jambes",
+                techPoints: 340,
+                premium: false,
+                stats: {"ingenierie": 5},
+                nativeStatsRequired: {"ingenierie": 30}
+            },
+            {
+                id: 43,
+                name: "Jambières Techno",
+                slot: "jambes",
+                techPoints: 340,
+                premium: false,
+                stats: {"resistance": 6, "informatique": 6},
+                nativeStatsRequired: {"informatique": 120, "resistance": 50}
+            },
+            {
+                id: 44,
+                name: "Jupe Muyang ou Short Hansen ou Short Cyt / Mahx",
+                slot: "jambes",
+                techPoints: 340,
+                premium: false,
+                stats: {"agilite": 6}
+            },
+            {
+                id: 45,
+                name: "Jambière de DreadBall ou Jambières Runner",
+                slot: "jambes",
+                techPoints: 330,
+                premium: false,
+                stats: {"agilite": 7, "furtivite": 7},
+                nativeStatsRequired: {"agilite": 120}
+            },
+            {
+                id: 46,
+                name: "Jambières Sanguinaire",
+                slot: "jambes",
+                techPoints: 330,
+                premium: false,
+                stats: {"force": 16, "agilite": -4, "resistance": -4},
+                nativeStatsRequired: {"force": 120, "resistance": 50}
+            },
+            {
+                id: 47,
+                name: "Pantalon Cosmopolitain",
+                slot: "jambes",
+                techPoints: 330,
+                premium: false,
+                stats: {"agilite": 4, "resistance": 3}
+            },
+            {
+                id: 48,
+                name: "Collants Dermiques ou Collants Standard",
+                slot: "jambes",
+                techPoints: 320,
+                premium: false,
+                stats: {"agilite": 10, "resistance": -2},
+                nativeStatsRequired: {"agilite": 10, "resistance": 20}
+            },
+            {
+                id: 49,
+                name: "Jean Lev ou Jean Lev2 ou Jean Black",
+                slot: "jambes",
+                techPoints: 320,
+                premium: false,
+                stats: {"resistance": 5}
+            },
+            {
+                id: 50,
+                name: "Pantalon Médical",
+                slot: "jambes",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -10, "medecine": 13},
+                nativeStatsRequired: {"medecine": 30}
+            },
+            {
+                id: 51,
+                name: "Pantalon de Collectionneur",
+                slot: "jambes",
+                techPoints: 310,
+                premium: false,
+                stats: {"agilite": 4, "resistance": 5}
+            },
+            {
+                id: 52,
+                name: "Bas de robe Néon ou Bas de robe rouge",
+                slot: "jambes",
+                techPoints: 300,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"agilite": 60}
+            },
+            {
+                id: 53,
+                name: "Jupe Métal",
+                slot: "jambes",
+                techPoints: 300,
+                premium: false,
+                stats: {"agilite": -3, "resistance": 8, "furtivite": -10, "sante": 5},
+                nativeStatsRequired: {"agilite": 20, "force": 20}
+            },
+            {
+                id: 54,
+                name: "Mini Short",
+                slot: "jambes",
+                techPoints: 300,
+                premium: false,
+                stats: {"agilite": 10, "resistance": -5, "sante": 6}
+            },
+            {
+                id: 55,
+                name: "Jupe Këylt / Plissée ou Jupen Hansen",
+                slot: "jambes",
+                techPoints: 280,
+                premium: false,
+                stats: {"sante": 15}
+            },
+            {
+                id: 56,
+                name: "Boxer moulant ou String Ecureuil ou String Sexy",
+                slot: "jambes",
+                techPoints: 250,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 57,
+                name: "Short Abimé",
+                slot: "jambes",
+                techPoints: 250,
+                premium: false,
+                stats: {"resistance": -5, "furtivite": 15}
+            },
+            {
+                id: 58,
+                name: "Gode Ceinture",
+                slot: "jambes",
+                techPoints: 69,
+                premium: false,
+                stats: {},
+                nativeStatsRequired: {"agilite": 69}
+            },
+            {
+                id: 59,
+                name: "Pantalon d’éveil (H)/(F)",
+                slot: "jambes",
+                techPoints: 60,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 60,
+                name: "Slip Ecureuil",
+                slot: "jambes",
+                techPoints: 0,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 61,
+                name: "Bottes à talons ou Bottes Alpha ou Chaussures DreadBall",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {"vitesse": 1}
+            },
+            {
+                id: 62,
+                name: "Leg Warmers",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {"vitesse": 1},
+                nativeStatsRequired: {"agilite": 30}
+            },
+            {
+                id: 63,
+                name: "Bottes à Piques",
+                slot: "pieds",
+                techPoints: 360,
+                premium: false,
+                stats: {"force": 4, "vitesse": 1}
+            },
+            {
+                id: 64,
+                name: "Escarpins Bijela",
+                slot: "pieds",
+                techPoints: 360,
+                premium: false,
+                stats: {"force": 4, "vitesse": 1},
+                nativeStatsRequired: {"agilite": 10}
+            },
+            {
+                id: 65,
+                name: "Bottes Renforcées ou Bottes renforcées noires",
+                slot: "pieds",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 5, "agilite": -5, "resistance": 5, "vitesse": 1},
+                nativeStatsRequired: {"resistance": 20}
+            },
+            {
+                id: 66,
+                name: "Chaussures de Sécurité ou Exo Pompes de Chantier",
+                slot: "pieds",
+                techPoints: 350,
+                premium: false,
+                stats: {"ingenierie": 8, "vitesse": 1},
+                nativeStatsRequired: {"ingenierie": 30}
+            },
+            {
+                id: 67,
+                name: "Ballerines ou Chaussures Bowling ou Chaussures de Ville noires",
+                slot: "pieds",
+                techPoints: 340,
+                premium: false,
+                stats: {"vitesse": 1}
+            },
+            {
+                id: 68,
+                name: "Escarpins ou Escarpins noirs",
+                slot: "pieds",
+                techPoints: 340,
+                premium: false,
+                stats: {"vitesse": 1},
+                nativeStatsRequired: {"agilite": 1}
+            },
+            {
+                id: 69,
+                name: "Chaussures à Talons",
+                slot: "pieds",
+                techPoints: 340,
+                premium: false,
+                stats: {"vitesse": 1}
+            },
+            {
+                id: 70,
+                name: "Bottes",
+                slot: "pieds",
+                techPoints: 330,
+                premium: false,
+                stats: {"agilite": 7, "vitesse": 1},
+                nativeStatsRequired: {"force": 20}
+            },
+            {
+                id: 71,
+                name: "Basket Poumo ou Basket Reezo ou Baskets Arika ou Baskets Globe",
+                slot: "pieds",
+                techPoints: 320,
+                premium: false,
+                stats: {"agilite": 4, "furtivite": -10, "vitesse": 1}
+            },
+            {
+                id: 72,
+                name: "Cyber-Pompes",
+                slot: "pieds",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 7, "vitesse": 1},
+                nativeStatsRequired: {"informatique": 30}
+            },
+            {
+                id: 73,
+                name: "Sabot",
+                slot: "pieds",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -8, "medecine": 12, "vitesse": 1},
+                nativeStatsRequired: {"medecine": 30}
+            },
+            {
+                id: 74,
+                name: "Booster",
+                slot: "pieds",
+                techPoints: 200,
+                premium: false,
+                stats: {"agilite": -20, "furtivite": -30, "vitesse": 2},
+                nativeStatsRequired: {"agilite": 120}
+            },
+            {
+                id: 75,
+                name: "Chausson d’éveil",
+                slot: "pieds",
+                techPoints: 60,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 76,
+                name: "Chaussettes",
+                slot: "pieds",
+                techPoints: 50,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 77,
+                name: "Cache-oeil",
+                slot: "secondaire",
+                techPoints: 400,
+                premium: false,
+                stats: {"perception": -10}
+            },
+            {
+                id: 78,
+                name: "Cravate ou Mitaines ou Gants Dentelles ou Pendentif Cristal ou Vaychette Original",
+                slot: "secondaire",
+                techPoints: 360,
+                premium: false,
+                stats: {"force": 6}
+            },
+            {
+                id: 79,
+                name: "Ceinture ou Ceinture Féminine ou Ceinture Noire ou Holster",
+                slot: "secondaire",
+                techPoints: 350,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 80,
+                name: "Epaulettes",
+                slot: "secondaire",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": -5, "resistance": 10},
+                nativeStatsRequired: {"force": 50, "resistance": 60}
+            },
+            {
+                id: 81,
+                name: "Jetpack E2 ou Jetpack F2",
+                slot: "secondaire",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": -8, "furtivite": -15, "vitesse": 1},
+                nativeStatsRequired: {"agilite": 110}
+            },
+            {
+                id: 82,
+                name: "Vaychette Noir",
+                slot: "secondaire",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 6}
+            },
+            {
+                id: 83,
+                name: "Collier Tech' ou Colier Cyber",
+                slot: "secondaire",
+                techPoints: 330,
+                premium: false,
+                stats: {"informatique": 15, "ingenierie": 7},
+                nativeStatsRequired: {"informatique": 150}
+            },
+            {
+                id: 84,
+                name: "Trousse de Secours",
+                slot: "secondaire",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 10},
+                nativeStatsRequired: {"medecine": 150}
+            },
+            {
+                id: 85,
+                name: "Chaîne ou Collier en Cuir",
+                slot: "secondaire",
+                techPoints: 300,
+                premium: false,
+                stats: {"agilite": -2, "resistance": 10},
+                nativeStatsRequired: {"force": 90}
+            },
+            {
+                id: 86,
+                name: "Cibleur",
+                slot: "secondaire",
+                techPoints: 300,
+                premium: false,
+                stats: {"perception": 5, "medecine": 5, "ingenierie": 7},
+                nativeStatsRequired: {"perception": 100, "medecine": 100}
+            },
+            {
+                id: 87,
+                name: "Lunettes de soleil ou Lunettes Rétro",
+                slot: "secondaire",
+                techPoints: 300,
+                premium: false,
+                stats: {"furtivite": 5}
+            },
+            {
+                id: 88,
+                name: "Déflecteur",
+                slot: "secondaire",
+                techPoints: 250,
+                premium: false,
+                stats: {"resistance": 15},
+                nativeStatsRequired: {"resistance": 130}
+            },
+            {
+                id: 89,
+                name: "Lunettes de Vision Nocturne",
+                slot: "secondaire",
+                techPoints: 240,
+                premium: false,
+                stats: {"perception": 16},
+                nativeStatsRequired: {"perception": 50}
+            },
+            {
+                id: 90,
+                name: "Monocle",
+                slot: "secondaire",
+                techPoints: 240,
+                premium: false,
+                stats: {"perception": 12},
+                nativeStatsRequired: {"perception": 50}
+            },
+            {
+                id: 91,
+                name: "Celeris A ou Celeris Z ou Celeris K ou Celeris X ou Celeris W",
+                slot: "secondaire",
+                techPoints: 220,
+                premium: false,
+                stats: {"agilite": -8, "furtivite": -15, "vitesse": 1},
+                nativeStatsRequired: {"agilite": 110, "resistance": 60}
+            },
+            {
+                id: 92,
+                name: "Lunettes Cyber",
+                slot: "secondaire",
+                techPoints: 160,
+                premium: false,
+                stats: {"informatique": 25},
+                nativeStatsRequired: {"informatique": 150}
+            },
+            {
+                id: 93,
+                name: "Anneau Or ou Diamant jaune ou Bague Emeraude ou Bague Saphire Pourpre ou Chevalière Argent ou Bracelet ou Bracelet impérial ou Bracelet Lux ou Bracelet or",
+                slot: "secondaire",
+                techPoints: 0,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 94,
+                name: "Bonnet ou Casque Audio V1 ou Casque Audio V2 ou Cyber Locks bleu ou Cyber Locks rouge",
+                slot: "tete",
+                techPoints: 380,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 95,
+                name: "Masque à Gaz",
+                slot: "tete",
+                techPoints: 360,
+                premium: false,
+                stats: {"perception": -5, "sante": 12},
+                nativeStatsRequired: {"resistance": 50, "ingenierie": 50}
+            },
+            {
+                id: 96,
+                name: "Masque de la Peste ou Masque NO / Chauve souris",
+                slot: "tete",
+                techPoints: 360,
+                premium: false,
+                stats: {"agilite": -2, "perception": 6},
+                nativeStatsRequired: {"resistance": 50, "perception": 50}
+            },
+            {
+                id: 97,
+                name: "Masque Exogène",
+                slot: "tete",
+                techPoints: 360,
+                premium: false,
+                stats: {"agilite": -5, "perception": 6},
+                nativeStatsRequired: {"resistance": 50, "perception": 50}
+            },
+            {
+                id: 98,
+                name: "Casque M21",
+                slot: "tete",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": -5, "resistance": 5, "perception": 5},
+                nativeStatsRequired: {"resistance": 80, "perception": 100}
+            },
+            {
+                id: 99,
+                name: "Chapeau de Sherif",
+                slot: "tete",
+                techPoints: 350,
+                premium: false,
+                stats: {"agilite": 5}
+            },
+            {
+                id: 100,
+                name: "Cagoule tech4",
+                slot: "tete",
+                techPoints: 330,
+                premium: false,
+                stats: {"ingenierie": 5},
+                nativeStatsRequired: {"ingenierie": 150}
+            },
+            {
+                id: 101,
+                name: "Casque de Chantier ou Loupe binoculaire",
+                slot: "tete",
+                techPoints: 330,
+                premium: false,
+                stats: {"ingenierie": 5},
+                nativeStatsRequired: {"ingenierie": 30}
+            },
+            {
+                id: 102,
+                name: "Casquette Impérialiste",
+                slot: "tete",
+                techPoints: 330,
+                premium: false,
+                stats: {"agilite": 10, "resistance": -3}
+            },
+            {
+                id: 103,
+                name: "Calot",
+                slot: "tete",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 7},
+                nativeStatsRequired: {"medecine": 30}
+            },
+            {
+                id: 104,
+                name: "Casque Anti-Emeute ou Casque DreadBall",
+                slot: "tete",
+                techPoints: 320,
+                premium: false,
+                stats: {"resistance": 10, "perception": -2},
+                nativeStatsRequired: {"resistance": 60}
+            },
+            {
+                id: 105,
+                name: "Cyber-lunettes",
+                slot: "tete",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 9},
+                nativeStatsRequired: {"informatique": 30}
+            },
+            {
+                id: 106,
+                name: "Bandana Jaune ou Bandana Vert ou Bandana Rouge / Noir / Bleu",
+                slot: "tete",
+                techPoints: 300,
+                premium: false,
+                stats: {"force": 8, "agilite": 7, "resistance": -5},
+                nativeStatsRequired: {"agilite": 50}
+            },
+            {
+                id: 107,
+                name: "Casquette ou Casquette noire ou Casquette de Fan / Citadun / Oxium",
+                slot: "tete",
+                techPoints: 300,
+                premium: false,
+                stats: {"resistance": -5, "perception": 8, "furtivite": 5}
+            },
+            {
+                id: 108,
+                name: "Masque d'Ecureuil ou Masque de Rat",
+                slot: "tete",
+                techPoints: 300,
+                premium: false,
+                stats: {"furtivite": 9},
+                nativeStatsRequired: {"furtivite": 10}
+            },
+            {
+                id: 109,
+                name: "Casque Ancien",
+                slot: "tete",
+                techPoints: 280,
+                premium: false,
+                stats: {"resistance": 12},
+                nativeStatsRequired: {"force": 60, "resistance": 60}
+            },
+            {
+                id: 110,
+                name: "Foulard",
+                slot: "tete",
+                techPoints: 280,
+                premium: false,
+                stats: {"furtivite": 14},
+                nativeStatsRequired: {"agilite": 60, "furtivite": 60}
+            },
+            {
+                id: 111,
+                name: "Casque intégral",
+                slot: "tete",
+                techPoints: 210,
+                premium: false,
+                stats: {"perception": 5, "informatique": 15},
+                nativeStatsRequired: {"informatique": 130}
+            },
+            {
+                id: 112,
+                name: "Casque réglable",
+                slot: "tete",
+                techPoints: 200,
+                premium: false,
+                stats: {"ingenierie": 15},
+                nativeStatsRequired: {"ingenierie": 130}
+            },
+            {
+                id: 113,
+                name: "Oreilles de lapin ou Perruque bleue ou Perruque rousse",
+                slot: "tete",
+                techPoints: 0,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 114,
+                name: "★ Ceinture titane",
+                slot: "secondaire",
+                techPoints: 400,
+                premium: true,
+                stats: {}
+            },
+            {
+                id: 115,
+                name: "★ Overboard",
+                slot: "secondaire",
+                techPoints: 240,
+                premium: true,
+                stats: {"agilite": -8, "furtivite": -15, "vitesse": 1}
+            },
+            {
+                id: 116,
+                name: "★ Parapactum",
+                slot: "secondaire",
+                techPoints: 320,
+                premium: true,
+                stats: {"resistance": 8}
+            },
+            {
+                id: 117,
+                name: "★ Epaulettes en cristal",
+                slot: "secondaire",
+                techPoints: 380,
+                premium: true,
+                stats: {"resistance": 5}
+            },
+            {
+                id: 118,
+                name: "★ Anneau Impérial",
+                slot: "secondaire",
+                techPoints: 0,
+                premium: true,
+                stats: {}
+            },
+            {
+                id: 119,
+                name: "★ Lunettes Cyber 2.0",
+                slot: "secondaire",
+                techPoints: 160,
+                premium: true,
+                stats: {"informatique": 25}
+            },
+            {
+                id: 120,
+                name: "★ Boite à outils",
+                slot: "secondaire",
+                techPoints: 160,
+                premium: true,
+                stats: {"ingenierie": 21}
+            },
+            {
+                id: 121,
+                name: "★ Haut de forme",
+                slot: "tete",
+                techPoints: 400,
+                premium: true,
+                stats: {}
+            },
+            {
+                id: 122,
+                name: "★ Binocles Punk",
+                slot: "tete",
+                techPoints: 360,
+                premium: true,
+                stats: {"perception": 6, "furtivite": 6}
+            },
+            {
+                id: 123,
+                name: "★ Combinaison Tech5",
+                slot: "tete",
+                techPoints: 330,
+                premium: true,
+                stats: {"ingenierie": 5}
+            },
+            {
+                id: 124,
+                name: "★ Capuche d’invisibilité",
+                slot: "tete",
+                techPoints: 280,
+                premium: true,
+                stats: {"furtivite": 14}
+            },
+            {
+                id: 125,
+                name: "★ Respirateur",
+                slot: "tete",
+                techPoints: 350,
+                premium: true,
+                stats: {"sante": 6, "forme": 6}
+            },
+            {
+                id: 126,
+                name: "★ Borsalino",
+                slot: "tete",
+                techPoints: 340,
+                premium: true,
+                stats: {"agilite": 7, "furtivite": 7}
+            },
+            {
+                id: 127,
+                name: "★ T-shirt de fan",
+                slot: "buste",
+                techPoints: 350,
+                premium: true,
+                stats: {"agilite": 5}
+            },
+            {
+                id: 128,
+                name: "★ Cuirasse en cristal",
+                slot: "buste",
+                techPoints: 380,
+                premium: true,
+                stats: {"resistance": 20, "agilite": -10}
+            },
+            {
+                id: 129,
+                name: "★ Armure dermique",
+                slot: "buste",
+                techPoints: 350,
+                premium: true,
+                stats: {"force": 5, "agilite": 3}
+            },
+            {
+                id: 130,
+                name: "★ Santiags",
+                slot: "pieds",
+                techPoints: 400,
+                premium: true,
+                stats: {"force": 10, "agilite": -5, "furtivite": -10, "vitesse": 1}
+            },
+            {
+                id: 131,
+                name: "◆ Pantalon A 3xx N (Neart - Force)",
+                slot: "jambes",
+                techPoints: 330,
+                premium: false,
+                stats: {"force": 16, "agilite": -4, "resistance": -4}
+            },
+            {
+                id: 132,
+                name: "◆ Pantalon A 3xx P (Pagsukol - Résistance)",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 133,
+                name: "◆ Pantalon A 3xx P T (Taju - Perception)",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 134,
+                name: "◆ Pantalon A 3xx P L (List - Furtivité)",
+                slot: "jambes",
+                techPoints: 360,
+                premium: false,
+                stats: {"agilite": 4, "furtivite": 5}
+            },
+            {
+                id: 135,
+                name: "◆ Pantalon A 3xx J (Jeni - Ingénierie)",
+                slot: "jambes",
+                techPoints: 360,
+                premium: false,
+                stats: {"ingenierie": 5}
+            },
+            {
+                id: 136,
+                name: "◆ Pantalon A 3xx O (Obat - Médecine)",
+                slot: "jambes",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -10, "medecine": 13}
+            },
+            {
+                id: 137,
+                name: "◆ Pantalon A 3xx D (Datuak - Informatique)",
+                slot: "jambes",
+                techPoints: 330,
+                premium: false,
+                stats: {"resistance": 6, "informatique": 6}
+            },
+            {
+                id: 138,
+                name: "◆ Bottes A3xx N (Neart - Force)",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {"force": 10, "agilite": -5, "furtivite": -10}
+            },
+            {
+                id: 139,
+                name: "◆ Bottes A3xx P (Pagsukol - Résistance)",
+                slot: "pieds",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 5, "agilite": -5, "resistance": 5}
+            },
+            {
+                id: 140,
+                name: "◆ Bottes A3xx T (Taju - Perception)",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 141,
+                name: "◆ Bottes A3xx L (List - Furtivité)",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 142,
+                name: "◆ Bottes A3xx J (Jeni - Ingénierie)",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 143,
+                name: "◆ Bottes A3xx O (Obat - Médecine)",
+                slot: "pieds",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -12, "medecine": 12}
+            },
+            {
+                id: 144,
+                name: "◆ Bottes A3xx D (Datuak - Informatique)",
+                slot: "pieds",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 7}
+            },
+            {
+                id: 145,
+                name: "◆ Secondaire A3xx N (Neart - Force)",
+                slot: "secondaire",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 6, "furtivite": -15}
+            },
+            {
+                id: 146,
+                name: "◆ Secondaire A3xx P (Pagsukol - Résistance)",
+                slot: "secondaire",
+                techPoints: 250,
+                premium: false,
+                stats: {"resistance": 15}
+            },
+            {
+                id: 147,
+                name: "◆ Secondaire A3xx T (Taju - Perception)",
+                slot: "secondaire",
+                techPoints: 240,
+                premium: false,
+                stats: {"perception": 16}
+            },
+            {
+                id: 148,
+                name: "◆ Secondaire A3xx L (List - Furtivité)",
+                slot: "secondaire",
+                techPoints: 140,
+                premium: false,
+                stats: {"furtivite": 25}
+            },
+            {
+                id: 149,
+                name: "◆ Secondaire A3xx J (Jeni - Ingénierie)",
+                slot: "secondaire",
+                techPoints: 160,
+                premium: false,
+                stats: {"ingenierie": 21}
+            },
+            {
+                id: 150,
+                name: "◆ Secondaire A3xx O (Obat - Médecine)",
+                slot: "secondaire",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 10}
+            },
+            {
+                id: 151,
+                name: "◆ Secondaire A3xx D (Datuak - Informatique)",
+                slot: "secondaire",
+                techPoints: 330,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 152,
+                name: "◆ Over A370",
+                slot: "secondaire",
+                techPoints: 240,
+                premium: false,
+                stats: {"agilite": -8, "furtivite": -15, "vitesse": 1}
+            },
+            {
+                id: 153,
+                name: "◆ Armure A 3xx N (Neart - Force)",
+                slot: "buste",
+                techPoints: 350,
+                premium: false,
+                stats: {"force": 5, "agilite": 3}
+            },
+            {
+                id: 154,
+                name: "◆ Armure A 3xx P (Pagsukol - Résistance)",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {"agilite": -15, "resistance": 25}
+            },
+            {
+                id: 155,
+                name: "◆ Armure A 3xx T (Taju - Perception)",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 156,
+                name: "◆ Armure A 3xx L (List - Furtivité)",
+                slot: "buste",
+                techPoints: 360,
+                premium: false,
+                stats: {"resistance": 4, "furtivite": 4}
+            },
+            {
+                id: 157,
+                name: "◆ Armure A 3xx J (Jeni - Ingénierie)",
+                slot: "buste",
+                techPoints: 340,
+                premium: false,
+                stats: {"ingenierie": 4}
+            },
+            {
+                id: 158,
+                name: "◆ Armure A 3xx O (Obat - Médecine)",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"furtivite": -12, "medecine": 14}
+            },
+            {
+                id: 159,
+                name: "◆ Armure A 3xx D (Datuak - Informatique)",
+                slot: "buste",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 8}
+            },
+            {
+                id: 160,
+                name: "◆ Casque A 3xx N (Neart - Force)",
+                slot: "tete",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 161,
+                name: "◆ Casque A 3xx P (Pagsukol - Résistance)",
+                slot: "tete",
+                techPoints: 280,
+                premium: false,
+                stats: {"resistance": 12}
+            },
+            {
+                id: 162,
+                name: "◆ Casque A 3xx T (Taju - Perception)",
+                slot: "tete",
+                techPoints: 360,
+                premium: false,
+                stats: {"perception": 6}
+            },
+            {
+                id: 163,
+                name: "◆ Casque A 3xx L (List - Furtivité)",
+                slot: "tete",
+                techPoints: 280,
+                premium: false,
+                stats: {"furtivite": 14}
+            },
+            {
+                id: 164,
+                name: "◆ Casque A 3xx J (Jeni - Ingénierie)",
+                slot: "tete",
+                techPoints: 330,
+                premium: false,
+                stats: {"ingenierie": 5}
+            },
+            {
+                id: 165,
+                name: "◆ Casque A 3xx O (Obat - Médecine)",
+                slot: "tete",
+                techPoints: 320,
+                premium: false,
+                stats: {"medecine": 7}
+            },
+            {
+                id: 166,
+                name: "◆ Casque A 3xx D (Datuak - Informatique)",
+                slot: "tete",
+                techPoints: 320,
+                premium: false,
+                stats: {"informatique": 9}
+            },
+            {
+                id: 167,
+                name: "◆ Masque Squelette",
+                slot: "tete",
+                techPoints: 400,
+                premium: false,
+                stats: {"resistance": 4, "informatique": 4, "perception": 4}
+            },
+            {
+                id: 168,
+                name: "◆ Blouson / Veste A323",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 169,
+                name: "◆ Combinaison Squelette",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {"resistance": 4, "force": 4, "agilite": -2}
+            },
+            {
+                id: 170,
+                name: "◆ Armure technologie",
+                slot: "buste",
+                techPoints: 400,
+                premium: false,
+                stats: {"informatique": 10, "furtivite": -10}
+            },
+            {
+                id: 171,
+                name: "◆ Basquettes / Bottines A323",
+                slot: "pieds",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+            {
+                id: 172,
+                name: "◆ Bagy / Jean A323",
+                slot: "jambes",
+                techPoints: 400,
+                premium: false,
+                stats: {}
+            },
+        ];
+
+        const kits = [
+            {
+                id: 1,
+                name: "À lampe frontale",
+                slot: "tete",
+                cost: 60,
+                stats: {"resistance": -1, "perception": 4},
+                prerequisites: ["Fantassin Initié", "Tu veux t'battre ?"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 2,
+                name: "Androïde",
+                slot: "tete",
+                cost: 0,
+                stats: {"forme": 20},
+                prerequisites: ["Androïde"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 3,
+                name: "Chirurgien",
+                slot: "tete",
+                cost: 160,
+                stats: {"medecine": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 4,
+                name: "Combat",
+                slot: "tete",
+                cost: 70,
+                stats: {"force": 5, "agilite": -2, "resistance": 4},
+                prerequisites: ["Fantassin Initié", "Collectionneur de cadavres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 5,
+                name: "Concepteur",
+                slot: "tete",
+                cost: 160,
+                stats: {"ingenierie": 16},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 6,
+                name: "Decker",
+                slot: "tete",
+                cost: 110,
+                stats: {"informatique": 6},
+                prerequisites: ["Geek", "Génie", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 7,
+                name: "Délégué Impérial",
+                slot: "tete",
+                cost: 330,
+                stats: {"agilite": 12, "resistance": 12, "perception": 12},
+                prerequisites: ["Delégué Impérial"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 8,
+                name: "Doc",
+                slot: "tete",
+                cost: 120,
+                stats: {"resistance": 6, "medecine": 6},
+                prerequisites: ["Urgentiste", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 9,
+                name: "Du Coach",
+                slot: "tete",
+                cost: 200,
+                stats: {"agilite": -20, "furtivite": -20},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 10,
+                name: "Elfique",
+                slot: "tete",
+                cost: 175,
+                stats: {"agilite": 2, "resistance": -2, "perception": 15},
+                prerequisites: ["Elfe"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 11,
+                name: "Eugéniste",
+                slot: "tete",
+                cost: 200,
+                stats: {"agilite": 6, "resistance": 6, "perception": 6, "furtivite": 6, "informatique": 6, "medecine": 6, "ingenierie": 6},
+                prerequisites: ["Humain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 12,
+                name: "Futuriste",
+                slot: "tete",
+                cost: 160,
+                stats: {"agilite": -2, "resistance": 5, "perception": 12},
+                prerequisites: ["Geek", "Génie", "Scientifique"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 13,
+                name: "Gnoll",
+                slot: "tete",
+                cost: 0,
+                stats: {"agilite": 4},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 14,
+                name: "Gobelin",
+                slot: "tete",
+                cost: 0,
+                stats: {"ingenierie": 4},
+                prerequisites: ["Gobelin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 15,
+                name: "Haut Dignitaire",
+                slot: "tete",
+                cost: 320,
+                stats: {"sante": 12, "resistance": 4, "perception": 14, "medecine": 12},
+                prerequisites: ["Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 16,
+                name: "Impérial",
+                slot: "tete",
+                cost: 190,
+                stats: {"sante": 12, "resistance": 10, "perception": 10},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 17,
+                name: "Incassable",
+                slot: "tete",
+                cost: 140,
+                stats: {"resistance": 11},
+                prerequisites: ["Peau d'Argent", "J'en ai vu d'autres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 18,
+                name: "Ingénieur",
+                slot: "tete",
+                cost: 110,
+                stats: {"ingenierie": 7},
+                prerequisites: ["Ingénieur", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 19,
+                name: "Journaliste",
+                slot: "tete",
+                cost: 280,
+                stats: {"sante": 20, "agilite": -5, "resistance": 5, "perception": 10},
+                prerequisites: ["DreadCast Network"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 20,
+                name: "Kobold",
+                slot: "tete",
+                cost: 140,
+                stats: {"forme": 10, "furtivite": 18},
+                prerequisites: ["Kobold"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 21,
+                name: "Léger",
+                slot: "tete",
+                cost: 80,
+                stats: {"agilite": 9, "resistance": -2},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 22,
+                name: "Loyaliste",
+                slot: "tete",
+                cost: 90,
+                stats: {"force": 9, "agilite": 2, "resistance": -2},
+                prerequisites: ["Impérial et Citoyen", "Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 23,
+                name: "Matriciel",
+                slot: "tete",
+                cost: 150,
+                stats: {"informatique": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 24,
+                name: "Nain",
+                slot: "tete",
+                cost: 0,
+                stats: {"sante": 20},
+                prerequisites: ["Nain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 25,
+                name: "Noble",
+                slot: "tete",
+                cost: 220,
+                stats: {"agilite": 10, "resistance": -8, "perception": 20, "furtivite": -5},
+                prerequisites: ["Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 26,
+                name: "Orc",
+                slot: "tete",
+                cost: 145,
+                stats: {"force": 15},
+                prerequisites: ["Orc"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 27,
+                name: "Outrilien",
+                slot: "tete",
+                cost: 0,
+                stats: {"medecine": 4},
+                prerequisites: ["Outrilien"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 28,
+                name: "Paria",
+                slot: "tete",
+                cost: 120,
+                stats: {"sante": 5, "forme": 5, "resistance": -10, "furtivite": 11},
+                prerequisites: ["Résident", "Anti-Citoyen"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 29,
+                name: "Passe-partout",
+                slot: "tete",
+                cost: 140,
+                stats: {"furtivite": 14},
+                prerequisites: ["Sain et Sauf", "Rôdeur", "Félin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 30,
+                name: "Police",
+                slot: "tete",
+                cost: 150,
+                stats: {"agilite": 10, "resistance": 5, "furtivite": -5},
+                prerequisites: ["Cercle de l’Orient"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 31,
+                name: "Troll",
+                slot: "tete",
+                cost: 140,
+                stats: {"forme": 20, "resistance": 13},
+                prerequisites: ["Troll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 32,
+                name: "Vautour",
+                slot: "tete",
+                cost: 0,
+                stats: {"informatique": 4},
+                prerequisites: ["Vautour"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 33,
+                name: "À capuchon",
+                slot: "buste",
+                cost: 80,
+                stats: {"furtivite": 6},
+                prerequisites: ["Sain et Sauf", "Rôdeur", "Félin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 34,
+                name: "Androïde",
+                slot: "buste",
+                cost: 0,
+                stats: {"forme": 20},
+                prerequisites: ["Androïde"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 35,
+                name: "Bien ajusté",
+                slot: "buste",
+                cost: 200,
+                stats: {"force": 5, "agilite": 15, "resistance": -5, "perception": 5},
+                prerequisites: ["Directeur Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 36,
+                name: "Blindé",
+                slot: "buste",
+                cost: 250,
+                stats: {"resistance": 16},
+                prerequisites: ["Peau d'Argent", "J'en ai vu d'autres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 37,
+                name: "Chirurgien",
+                slot: "buste",
+                cost: 160,
+                stats: {"medecine": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 38,
+                name: "Combat",
+                slot: "buste",
+                cost: 70,
+                stats: {"force": 4, "agilite": -2, "resistance": 4},
+                prerequisites: ["Fantassin Initié", "Collectionneur de cadavres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 39,
+                name: "Concepteur",
+                slot: "buste",
+                cost: 180,
+                stats: {"forme": 20, "ingenierie": 16},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 40,
+                name: "Decker",
+                slot: "buste",
+                cost: 110,
+                stats: {"informatique": 9},
+                prerequisites: ["Geek", "Génie", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 41,
+                name: "Délégué Impérial",
+                slot: "buste",
+                cost: 330,
+                stats: {"agilite": 12, "resistance": 12, "perception": 12},
+                prerequisites: ["Delégué Impérial"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 42,
+                name: "Des anciens",
+                slot: "buste",
+                cost: 140,
+                stats: {"sante": 6, "agilite": -2, "resistance": 10},
+                prerequisites: ["J'en ai vu d'autres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 43,
+                name: "Doc",
+                slot: "buste",
+                cost: 120,
+                stats: {"forme": 6, "medecine": 7},
+                prerequisites: ["Urgentiste", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 44,
+                name: "Du Coach",
+                slot: "buste",
+                cost: 200,
+                stats: {"agilite": -20, "furtivite": -20},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 45,
+                name: "Elfique",
+                slot: "buste",
+                cost: 160,
+                stats: {"agilite": 3, "resistance": -3, "perception": 17},
+                prerequisites: ["Elfe"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 46,
+                name: "Eugéniste",
+                slot: "buste",
+                cost: 200,
+                stats: {"agilite": 6, "resistance": 6, "perception": 6, "furtivite": 6, "informatique": 6, "medecine": 6, "ingenierie": 6},
+                prerequisites: ["Humain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 47,
+                name: "Gnoll",
+                slot: "buste",
+                cost: 0,
+                stats: {"agilite": 4},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 48,
+                name: "Gobelin",
+                slot: "buste",
+                cost: 0,
+                stats: {"ingenierie": 4},
+                prerequisites: ["Gobelin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 49,
+                name: "Haut Dignitaire",
+                slot: "buste",
+                cost: 320,
+                stats: {"sante": 12, "resistance": 4, "perception": 14, "medecine": 14},
+                prerequisites: ["Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 50,
+                name: "Impérial",
+                slot: "buste",
+                cost: 280,
+                stats: {"sante": 8, "resistance": 10, "perception": 10},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 51,
+                name: "Ingénieur",
+                slot: "buste",
+                cost: 110,
+                stats: {"ingenierie": 8},
+                prerequisites: ["Ingénieur", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 52,
+                name: "Journaliste",
+                slot: "buste",
+                cost: 280,
+                stats: {"sante": 20, "agilite": -5, "resistance": 5, "perception": 10},
+                prerequisites: ["DreadCast Network"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 53,
+                name: "Kobold",
+                slot: "buste",
+                cost: 180,
+                stats: {"agilite": 5, "resistance": -8, "furtivite": 18},
+                prerequisites: ["Kobold"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 54,
+                name: "Loyaliste",
+                slot: "buste",
+                cost: 90,
+                stats: {"force": 8, "agilite": 2, "resistance": -2},
+                prerequisites: ["Citoyen", "Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 55,
+                name: "Matriciel",
+                slot: "buste",
+                cost: 160,
+                stats: {"informatique": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 56,
+                name: "Nain",
+                slot: "buste",
+                cost: 0,
+                stats: {"sante": 20},
+                prerequisites: ["Nain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 57,
+                name: "Noble",
+                slot: "buste",
+                cost: 220,
+                stats: {"agilite": 14, "resistance": -5, "perception": 14, "furtivite": -5},
+                prerequisites: ["Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 58,
+                name: "Orc",
+                slot: "buste",
+                cost: 160,
+                stats: {"force": 17, "resistance": 2},
+                prerequisites: ["Orc"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 59,
+                name: "Outrilien",
+                slot: "buste",
+                cost: 0,
+                stats: {"medecine": 4},
+                prerequisites: ["Outrilien"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 60,
+                name: "Paria",
+                slot: "buste",
+                cost: 120,
+                stats: {"sante": 5, "forme": 5, "resistance": -10, "informatique": 10},
+                prerequisites: ["Résident", "Anti-Citoyen"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 61,
+                name: "Police",
+                slot: "buste",
+                cost: 150,
+                stats: {"agilite": 5, "resistance": 10, "furtivite": -5},
+                prerequisites: ["Cercle de l'Orient"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 62,
+                name: "Souple",
+                slot: "buste",
+                cost: 90,
+                stats: {"agilite": 10, "resistance": -2},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 63,
+                name: "Troll",
+                slot: "buste",
+                cost: 340,
+                stats: {"resistance": 30},
+                prerequisites: ["Troll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 64,
+                name: "Vautour",
+                slot: "buste",
+                cost: 0,
+                stats: {"informatique": 4},
+                prerequisites: ["Vautour"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 65,
+                name: "Androïde",
+                slot: "jambes",
+                cost: 0,
+                stats: {"forme": 20},
+                prerequisites: ["Androïde"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 66,
+                name: "Chirurgien",
+                slot: "jambes",
+                cost: 160,
+                stats: {"forme": 15, "medecine": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 67,
+                name: "Clouté",
+                slot: "jambes",
+                cost: 120,
+                stats: {"force": 13, "agilite": -7, "resistance": 5},
+                prerequisites: ["Peau d'argent", "Brute", "Polyvalent"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 68,
+                name: "Combat",
+                slot: "jambes",
+                cost: 70,
+                stats: {"force": 4, "agilite": -2, "resistance": 4},
+                prerequisites: ["Fantassin Initié", "Collectionneur de cadavres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 69,
+                name: "Concepteur",
+                slot: "jambes",
+                cost: 160,
+                stats: {"ingenierie": 16},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 70,
+                name: "De pointe",
+                slot: "jambes",
+                cost: 160,
+                stats: {"agilite": 10, "resistance": -4, "perception": 10, "furtivite": -4},
+                prerequisites: ["Geek", "Génie", "Scientifique"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 71,
+                name: "Decker",
+                slot: "jambes",
+                cost: 110,
+                stats: {"informatique": 5},
+                prerequisites: ["Geek", "Génie", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 72,
+                name: "Délégué Impérial",
+                slot: "jambes",
+                cost: 330,
+                stats: {"agilite": 12, "resistance": 12, "perception": 12},
+                prerequisites: ["Delégué Impérial"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 73,
+                name: "Doc",
+                slot: "jambes",
+                cost: 110,
+                stats: {"forme": 5, "medecine": 7},
+                prerequisites: ["Urgentiste", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 74,
+                name: "Du Coach",
+                slot: "jambes",
+                cost: 200,
+                stats: {"agilite": -20, "furtivite": -20},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 75,
+                name: "Elfique",
+                slot: "jambes",
+                cost: 200,
+                stats: {"agilite": 4, "resistance": -2, "perception": 18},
+                prerequisites: ["Elfe"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 76,
+                name: "En fibre élastique",
+                slot: "jambes",
+                cost: 80,
+                stats: {"agilite": 9, "resistance": -2},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 77,
+                name: "Eugéniste",
+                slot: "jambes",
+                cost: 200,
+                stats: {"agilite": 6, "resistance": 6, "perception": 6, "furtivite": 6, "informatique": 6, "medecine": 6, "ingenierie": 6},
+                prerequisites: ["Humain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 78,
+                name: "Gnoll",
+                slot: "jambes",
+                cost: 0,
+                stats: {"agilite": 4},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 79,
+                name: "Gobelin",
+                slot: "jambes",
+                cost: 0,
+                stats: {"ingenierie": 4},
+                prerequisites: ["Gobelin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 80,
+                name: "Haut Dignitaire",
+                slot: "jambes",
+                cost: 320,
+                stats: {"sante": 12, "resistance": 4, "perception": 14, "medecine": 14},
+                prerequisites: ["Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 81,
+                name: "Impérial",
+                slot: "jambes",
+                cost: 250,
+                stats: {"sante": 12, "resistance": 8, "perception": 8},
+                prerequisites: ["Fidèle habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 82,
+                name: "Ingénieur",
+                slot: "jambes",
+                cost: 110,
+                stats: {"ingenierie": 8},
+                prerequisites: ["Ingénieur", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 83,
+                name: "Journaliste",
+                slot: "jambes",
+                cost: 280,
+                stats: {"forme": 20, "agilite": -5, "resistance": 5, "perception": 10},
+                prerequisites: ["DreadCast Network"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 84,
+                name: "Kobold",
+                slot: "jambes",
+                cost: 110,
+                stats: {"forme": 6, "furtivite": 12},
+                prerequisites: ["Kobold"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 85,
+                name: "Loyaliste",
+                slot: "jambes",
+                cost: 90,
+                stats: {"force": 8, "agilite": 2, "resistance": -2},
+                prerequisites: ["Citoyen", "Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 86,
+                name: "Matriciel",
+                slot: "jambes",
+                cost: 160,
+                stats: {"informatique": 13},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 87,
+                name: "Nain",
+                slot: "jambes",
+                cost: 0,
+                stats: {"sante": 20},
+                prerequisites: ["Nain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 88,
+                name: "Noble",
+                slot: "jambes",
+                cost: 220,
+                stats: {"agilite": 10, "resistance": -8, "perception": 20, "furtivite": -5},
+                prerequisites: ["Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 89,
+                name: "Orc",
+                slot: "jambes",
+                cost: 130,
+                stats: {"force": 17, "agilite": -8, "resistance": 2},
+                prerequisites: ["Orc"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 90,
+                name: "Outrilien",
+                slot: "jambes",
+                cost: 0,
+                stats: {"medecine": 4},
+                prerequisites: ["Outrilien"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 91,
+                name: "Paria",
+                slot: "jambes",
+                cost: 120,
+                stats: {"sante": 5, "forme": 5, "resistance": -10, "furtivite": 11},
+                prerequisites: ["Résident", "Anti-Citoyen"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 92,
+                name: "Police",
+                slot: "jambes",
+                cost: 150,
+                stats: {"sante": 6, "forme": 6, "perception": 5},
+                prerequisites: ["Cercle de l'Orient"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 93,
+                name: "Renforcé",
+                slot: "jambes",
+                cost: 120,
+                stats: {"resistance": 12},
+                prerequisites: ["Peau d'Argent", "J'en ai vu d'autres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 94,
+                name: "Sobre",
+                slot: "jambes",
+                cost: 140,
+                stats: {"furtivite": 14},
+                prerequisites: ["Sain et Sauf", "Rôdeur", "Félin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 95,
+                name: "Troll",
+                slot: "jambes",
+                cost: 120,
+                stats: {"resistance": 13},
+                prerequisites: ["Troll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 96,
+                name: "Vautour",
+                slot: "jambes",
+                cost: 0,
+                stats: {"informatique": 4},
+                prerequisites: ["Vautour"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 97,
+                name: "Androïde",
+                slot: "pieds",
+                cost: 0,
+                stats: {"forme": 20},
+                prerequisites: ["Androïde"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 98,
+                name: "Antigrav",
+                slot: "pieds",
+                cost: 250,
+                stats: {"agilite": -15, "vitesse": 1},
+                prerequisites: ["Directeur habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 99,
+                name: "Avec poids",
+                slot: "pieds",
+                cost: 150,
+                stats: {"agilite": -5, "resistance": 20},
+                prerequisites: ["Peau d'Argent", "J'en ai vu d'autres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 100,
+                name: "Chirurgien",
+                slot: "pieds",
+                cost: 160,
+                stats: {"medecine": 10},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 101,
+                name: "Combat",
+                slot: "pieds",
+                cost: 70,
+                stats: {"force": 4, "agilite": -2, "resistance": 4},
+                prerequisites: ["Fantassin Initié", "Collectionneur de cadavres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 102,
+                name: "Concepteur",
+                slot: "pieds",
+                cost: 160,
+                stats: {"ingenierie": 15},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 103,
+                name: "Decker",
+                slot: "pieds",
+                cost: 60,
+                stats: {"furtivite": -5, "informatique": 3, "ingenierie": 5},
+                prerequisites: ["Geek", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 104,
+                name: "Délégué Impérial",
+                slot: "pieds",
+                cost: 330,
+                stats: {"agilite": 12, "resistance": 12, "perception": 12},
+                prerequisites: ["Delégué Impérial"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 105,
+                name: "Doc",
+                slot: "pieds",
+                cost: 110,
+                stats: {"medecine": 7},
+                prerequisites: ["Urgentiste", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 106,
+                name: "Du Coach",
+                slot: "pieds",
+                cost: 200,
+                stats: {"force": -20, "perception": -20},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 107,
+                name: "Elfique",
+                slot: "pieds",
+                cost: 160,
+                stats: {"agilite": 3, "resistance": -3, "perception": 17},
+                prerequisites: ["Elfe"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 108,
+                name: "Ergonomique",
+                slot: "pieds",
+                cost: 140,
+                stats: {"forme": 20, "agilite": -5, "resistance": 3},
+                prerequisites: ["Fidèle habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 109,
+                name: "Eugéniste",
+                slot: "pieds",
+                cost: 200,
+                stats: {"agilite": 6, "resistance": 6, "perception": 6, "furtivite": 6, "informatique": 6, "medecine": 6, "ingenierie": 6},
+                prerequisites: ["Humain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 110,
+                name: "Gnoll",
+                slot: "pieds",
+                cost: 0,
+                stats: {"agilite": 4},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 111,
+                name: "Gobelin",
+                slot: "pieds",
+                cost: 0,
+                stats: {"ingenierie": 4},
+                prerequisites: ["Gobelin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 112,
+                name: "Haut Dignitaire",
+                slot: "pieds",
+                cost: 320,
+                stats: {"sante": 12, "resistance": 4, "perception": 14, "medecine": 14},
+                prerequisites: ["Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 113,
+                name: "Impérial",
+                slot: "pieds",
+                cost: 280,
+                stats: {"sante": 8, "resistance": 10, "perception": 10},
+                prerequisites: ["Fidèle habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 114,
+                name: "Ingénieur",
+                slot: "pieds",
+                cost: 110,
+                stats: {"ingenierie": 8},
+                prerequisites: ["Ingénieur", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 115,
+                name: "Journaliste",
+                slot: "pieds",
+                cost: 280,
+                stats: {"forme": 20, "agilite": -5, "resistance": 5, "perception": 10},
+                prerequisites: ["DreadCast Network"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 116,
+                name: "Kobold",
+                slot: "pieds",
+                cost: 180,
+                stats: {"forme": 10, "furtivite": 17},
+                prerequisites: ["Kobold"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 117,
+                name: "Loyaliste",
+                slot: "pieds",
+                cost: 90,
+                stats: {"force": 8, "agilite": 2, "resistance": -2},
+                prerequisites: ["Citoyen", "Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 118,
+                name: "Matriciel",
+                slot: "pieds",
+                cost: 160,
+                stats: {"informatique": 13},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 119,
+                name: "Nain",
+                slot: "pieds",
+                cost: 0,
+                stats: {"sante": 20},
+                prerequisites: ["Nain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 120,
+                name: "Noble",
+                slot: "pieds",
+                cost: 220,
+                stats: {"agilite": 14, "resistance": -5, "perception": 14, "furtivite": -5},
+                prerequisites: ["Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 121,
+                name: "Orc",
+                slot: "pieds",
+                cost: 170,
+                stats: {"force": 18, "agilite": 2},
+                prerequisites: ["Orc"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 122,
+                name: "Outrilien",
+                slot: "pieds",
+                cost: 0,
+                stats: {"medecine": 4},
+                prerequisites: ["Outrilien"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 123,
+                name: "Paria",
+                slot: "pieds",
+                cost: 120,
+                stats: {"sante": 5, "forme": 5, "resistance": -10, "furtivite": 10},
+                prerequisites: ["Résident", "Anti-Citoyen"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 124,
+                name: "Police",
+                slot: "pieds",
+                cost: 150,
+                stats: {"agilite": 10, "resistance": 5, "furtivite": -10},
+                prerequisites: ["Cercle de l'Orient"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 125,
+                name: "Silencieux",
+                slot: "pieds",
+                cost: 80,
+                stats: {"agilite": 4, "furtivite": 4},
+                prerequisites: ["Sain et Sauf", "Rôdeur", "Félin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 126,
+                name: "Solide",
+                slot: "pieds",
+                cost: 50,
+                stats: {},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 127,
+                name: "Troll",
+                slot: "pieds",
+                cost: 300,
+                stats: {"force": 5, "agilite": -5, "resistance": 45, "furtivite": -15},
+                prerequisites: ["Troll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 128,
+                name: "Vautour",
+                slot: "pieds",
+                cost: 0,
+                stats: {"informatique": 4},
+                prerequisites: ["Vautour"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 129,
+                name: "Androïde",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"forme": 20},
+                prerequisites: ["Androïde"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 130,
+                name: "Carnassier",
+                slot: "secondaire",
+                cost: 250,
+                stats: {"sante": 15, "force": 15, "agilite": 15, "resistance": -10, "medecine": -5},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 131,
+                name: "Chirurgien",
+                slot: "secondaire",
+                cost: 160,
+                stats: {"medecine": 10},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 132,
+                name: "Combat",
+                slot: "secondaire",
+                cost: 60,
+                stats: {"force": 3, "resistance": 3},
+                prerequisites: ["Fantassin Initié", "Collectionneur de cadavres"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 133,
+                name: "Concepteur",
+                slot: "secondaire",
+                cost: 160,
+                stats: {"ingenierie": 14},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 134,
+                name: "Decker",
+                slot: "secondaire",
+                cost: 110,
+                stats: {"informatique": 6},
+                prerequisites: ["Geek", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 135,
+                name: "Délégué Impérial",
+                slot: "secondaire",
+                cost: 330,
+                stats: {"agilite": 12, "resistance": 12, "perception": 12},
+                prerequisites: ["Delégué Impérial"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 136,
+                name: "Doc",
+                slot: "secondaire",
+                cost: 110,
+                stats: {"ingenierie": 8},
+                prerequisites: ["Urgentiste", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 137,
+                name: "Du Coach",
+                slot: "secondaire",
+                cost: 200,
+                stats: {"agilite": -20, "furtivite": -20},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 138,
+                name: "Elfique",
+                slot: "secondaire",
+                cost: 240,
+                stats: {"agilite": 4, "perception": 16},
+                prerequisites: ["Elfe"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 139,
+                name: "Eugéniste",
+                slot: "secondaire",
+                cost: 200,
+                stats: {"agilite": 6, "resistance": 6, "perception": 6, "furtivite": 6, "informatique": 6, "medecine": 6, "ingenierie": 6},
+                prerequisites: ["Humain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 140,
+                name: "Flexible",
+                slot: "secondaire",
+                cost: 140,
+                stats: {"agilite": 14, "resistance": -5, "furtivite": 7},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 141,
+                name: "Gnoll",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"agilite": 4},
+                prerequisites: ["Gnoll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 142,
+                name: "Gobelin",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"ingenierie": 4},
+                prerequisites: ["Gobelin"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 143,
+                name: "Haut Dignitaire",
+                slot: "secondaire",
+                cost: 320,
+                stats: {"sante": 12, "resistance": 4, "perception": 14, "medecine": 12},
+                prerequisites: ["Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 144,
+                name: "Impérial",
+                slot: "secondaire",
+                cost: 240,
+                stats: {"sante": 8, "resistance": 6, "perception": 10},
+                prerequisites: ["Fidèle habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 145,
+                name: "Ingénieur",
+                slot: "secondaire",
+                cost: 110,
+                stats: {"medecine": 6},
+                prerequisites: ["Ingénieur", "Technicien Habitué"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 146,
+                name: "Journaliste",
+                slot: "secondaire",
+                cost: 220,
+                stats: {"sante": 12, "forme": 12, "agilite": -2, "perception": 4},
+                prerequisites: ["DreadCast Network"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 147,
+                name: "Kobold",
+                slot: "secondaire",
+                cost: 140,
+                stats: {"forme": 6, "furtivite": 14},
+                prerequisites: ["Kobold"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 148,
+                name: "Loyaliste",
+                slot: "secondaire",
+                cost: 60,
+                stats: {"force": 4, "agilite": 2},
+                prerequisites: ["Citoyen", "Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 149,
+                name: "Massif",
+                slot: "secondaire",
+                cost: 130,
+                stats: {"sante": 16, "furtivite": -2},
+                prerequisites: ["Directeur Habitué", "Vendeur Confirmé"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 150,
+                name: "Matriciel",
+                slot: "secondaire",
+                cost: 150,
+                stats: {"informatique": 12},
+                prerequisites: ["Scientifique", "Technicien Expert"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 151,
+                name: "Nain",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"sante": 20},
+                prerequisites: ["Nain"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 152,
+                name: "Noble",
+                slot: "secondaire",
+                cost: 220,
+                stats: {"agilite": 14, "resistance": -5, "perception": 14, "furtivite": -5},
+                prerequisites: ["Noble", "Haut Dignitaire"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 153,
+                name: "Orc",
+                slot: "secondaire",
+                cost: 150,
+                stats: {"force": 12, "agilite": 2, "resistance": -5},
+                prerequisites: ["Orc"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 154,
+                name: "Outrilien",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"medecine": 4},
+                prerequisites: ["Outrilien"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 155,
+                name: "Paria",
+                slot: "secondaire",
+                cost: 120,
+                stats: {"sante": 5, "forme": 5, "resistance": -10, "furtivite": 10},
+                prerequisites: ["Résident", "Anti-Citoyen"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 156,
+                name: "Police",
+                slot: "secondaire",
+                cost: 150,
+                stats: {"agilite": 10, "resistance": 5, "furtivite": -5},
+                prerequisites: ["Cercle de l'Orient"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 157,
+                name: "Qualité",
+                slot: "secondaire",
+                cost: 120,
+                stats: {"force": 2, "resistance": 9},
+                prerequisites: [],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 158,
+                name: "Raffiné",
+                slot: "secondaire",
+                cost: 70,
+                stats: {"force": 3, "perception": 4},
+                prerequisites: ["Technicien Initié"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 159,
+                name: "Troll",
+                slot: "secondaire",
+                cost: 250,
+                stats: {"force": 3, "resistance": 21},
+                prerequisites: ["Troll"],
+                races: ["all"],
+                requirements: {}
+            },
+            {
+                id: 160,
+                name: "Vautour",
+                slot: "secondaire",
+                cost: 0,
+                stats: {"informatique": 4},
+                prerequisites: ["Vautour"],
+                races: ["all"],
+                requirements: {}
+            },
+        ];
+
+
+        // FONCTIONS DE L'APPLICATION
+
+        // Mapper les noms de paliers vers des valeurs numériques pour la comparaison
+        const accomplishmentLevels = {
+            'Débutant': 1,
+            'Initié': 2,
+            'Habitué': 3,
+            'Expérimenté': 4,
+            'Confirmé': 5,
+            'Expert': 6,
+            'Légendaire': 7
+        };
+
+        // Vérifier si le joueur possède un accomplissement requis (avec hiérarchie)
+        function hasAccomplishment(playerAccomplishments, requiredCategory, requiredLevel) {
+            const playerLevel = playerAccomplishments[requiredCategory] || 0;
+            const requiredLevelValue = accomplishmentLevels[requiredLevel] || 0;
+            return playerLevel >= requiredLevelValue;
+        }
+
+        // Vérifier si le joueur possède un statut requis
+        // Règles spéciales :
+        // - Anti-Citoyen et Résident : Ne peuvent porter QUE leurs propres kits
+        // - Citoyen : Peut porter les kits "Citoyen" uniquement
+        // - Noble : Peut porter "Noble" ET "Citoyen"
+        // - Haut-Dignitaire : Peut porter "Haut-Dignitaire", "Noble" ET "Citoyen"
+        // - Délégué Impérial : Peut porter "Délégué Impérial" ET "Citoyen"
+        function hasStatus(playerStatus, requiredStatus) {
+            // Si pas de statut requis, tout le monde peut
+            if (!requiredStatus) return true;
+            
+            // Si pas de statut joueur, seulement si pas de prérequis
+            if (!playerStatus) return false;
+            
+            // Correspondance exacte toujours acceptée
+            if (playerStatus === requiredStatus) return true;
+            
+            // Anti-Citoyen et Résident : strictement limités à leurs propres kits
+            if (playerStatus === 'Anti-Citoyen' || playerStatus === 'Résident') {
+                return false; // Déjà vérifié la correspondance exacte ci-dessus
+            }
+            
+            // Règles spécifiques selon le statut du joueur
+            switch (playerStatus) {
+                case 'Citoyen':
+                    // Citoyen ne peut porter que "Citoyen"
+                    return requiredStatus === 'Citoyen';
+                    
+                case 'Noble':
+                    // Noble peut porter "Noble" et "Citoyen"
+                    return requiredStatus === 'Noble' || requiredStatus === 'Citoyen';
+                    
+                case 'Haut-Dignitaire':
+                    // Haut-Dignitaire peut porter "Haut-Dignitaire", "Noble" et "Citoyen"
+                    return requiredStatus === 'Haut-Dignitaire' || 
+                           requiredStatus === 'Noble' || 
+                           requiredStatus === 'Citoyen';
+                    
+                case 'Délégué Impérial':
+                    // Délégué Impérial peut porter "Délégué Impérial" et "Citoyen"
+                    return requiredStatus === 'Délégué Impérial' || 
+                           requiredStatus === 'Citoyen';
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // Vérifier si le joueur possède les stats natives requises pour un équipement
+        function hasNativeStats(playerNativeStats, requiredNativeStats) {
+            if (!requiredNativeStats) return true; // Pas de prérequis natifs
+            
+            // Vérifier que le joueur a AU MOINS les stats requises
+            for (const [stat, minValue] of Object.entries(requiredNativeStats)) {
+                if ((playerNativeStats[stat] || 0) < minValue) {
+                    return false; // Le joueur n'a pas assez de cette stat native
+                }
+            }
+            
+            return true; // Toutes les stats natives requises sont satisfaites
+        }
+
+        // Gérer l'exclusivité de la case "Aucune des deux" pour les institutions
+        function handleInstitutionNone() {
+            const noneCheckbox = document.getElementById('inst-none');
+            if (noneCheckbox.checked) {
+                document.getElementById('inst-dreadcast').checked = false;
+                document.getElementById('inst-orient').checked = false;
+            }
+        }
+
+        function handleInstitutionChange() {
+            const dreadcastChecked = document.getElementById('inst-dreadcast').checked;
+            const orientChecked = document.getElementById('inst-orient').checked;
+            
+            if (dreadcastChecked || orientChecked) {
+                document.getElementById('inst-none').checked = false;
+            }
+        }
+
+        // Activer/désactiver les sélecteurs de priorité
+        function initializePrioritySelectors() {
+            const stats = ['force', 'agilite', 'resistance', 'perception', 'furtivite', 
+                          'informatique', 'medecine', 'ingenierie', 'sante', 'forme', 'vitesse'];
+            
+            stats.forEach(stat => {
+                const checkbox = document.getElementById(`stat-${stat}`);
+                const prioritySelect = document.getElementById(`priority-${stat}`);
+                
+                checkbox.addEventListener('change', function() {
+                    prioritySelect.disabled = !this.checked;
+                });
+            });
+        }
+
+        function showTab(tabName) {
+            // Masquer tous les contenus d'onglets
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Désactiver tous les onglets
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activer l'onglet sélectionné
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Charger les données si nécessaire
+            if (tabName === 'equipments') {
+                displayEquipments();
+            } else if (tabName === 'kits') {
+                displayKits();
+            }
+        }
+
+        function displayEquipments() {
+            const container = document.getElementById('equipments-table');
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>💡 Astuce :</strong> Décochez les équipements que vous ne souhaitez pas utiliser dans l'optimisation
+                        </div>
+                        <div>
+                            <button onclick="toggleAllEquipments(true)" style="margin-right: 10px; padding: 8px 15px;">✓ Tout sélectionner</button>
+                            <button onclick="toggleAllEquipments(false)" style="padding: 8px 15px;">✗ Tout désélectionner</button>
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Actif</th>
+                            <th>Nom</th>
+                            <th>Emplacement</th>
+                            <th>Points Tech</th>
+                            <th>Statistiques</th>
+                            <th>Prérequis Natifs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            equipments.forEach(eq => {
+                const statsText = Object.entries(eq.stats)
+                    .map(([stat, value]) => {
+                        const sign = value >= 0 ? '+' : '';
+                        const color = value >= 0 ? 'inherit' : '#dc3545';
+                        return `<span style="color: ${color}">${stat}: ${sign}${value}</span>`;
+                    })
+                    .join(', ');
+                
+                // Construire le texte des prérequis natifs
+                let nativeReqText = '-';
+                if (eq.nativeStatsRequired) {
+                    nativeReqText = Object.entries(eq.nativeStatsRequired)
+                        .map(([stat, value]) => `${stat}: ${value}`)
+                        .join(', ');
+                }
+                
+                const isEnabled = eq.enabled !== false; // Par défaut, tous sont activés
+                
+                html += `
+                    <tr class="${isEnabled ? '' : 'disabled-row'}">
+                        <td style="text-align: center;">
+                            <input type="checkbox" 
+                                   id="eq-${eq.id}" 
+                                   ${isEnabled ? 'checked' : ''} 
+                                   onchange="toggleEquipment(${eq.id})"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                        </td>
+                        <td><strong>${eq.name}</strong></td>
+                        <td><span class="slot-badge">${eq.slot}</span></td>
+                        <td>${eq.techPoints} pts</td>
+                        <td>${statsText}</td>
+                        <td style="font-size: 0.9em; color: #856404;">${nativeReqText}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function toggleEquipment(equipmentId) {
+            const equipment = equipments.find(eq => eq.id === equipmentId);
+            if (equipment) {
+                equipment.enabled = document.getElementById(`eq-${equipmentId}`).checked;
+                displayEquipments(); // Rafraîchir l'affichage
+            }
+        }
+
+        function toggleAllEquipments(enable) {
+            equipments.forEach(eq => {
+                eq.enabled = enable;
+                const checkbox = document.getElementById(`eq-${eq.id}`);
+                if (checkbox) {
+                    checkbox.checked = enable;
+                }
+            });
+            displayEquipments(); // Rafraîchir l'affichage
+        }
+
+        function displayKits() {
+            const container = document.getElementById('kits-table');
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>💡 Astuce :</strong> Décochez les kits que vous ne souhaitez pas utiliser dans l'optimisation
+                        </div>
+                        <div>
+                            <button onclick="toggleAllKits(true)" style="margin-right: 10px; padding: 8px 15px;">✓ Tout sélectionner</button>
+                            <button onclick="toggleAllKits(false)" style="padding: 8px 15px;">✗ Tout désélectionner</button>
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Actif</th>
+                            <th>Nom</th>
+                            <th>Emplacement</th>
+                            <th>Coût Tech</th>
+                            <th>Races</th>
+                            <th>Prérequis</th>
+                            <th>Statistiques</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            kits.forEach(kit => {
+                const statsText = Object.entries(kit.stats)
+                    .map(([stat, value]) => {
+                        const sign = value >= 0 ? '+' : '';
+                        const color = value >= 0 ? 'inherit' : '#dc3545';
+                        return `<span style="color: ${color}">${stat}: ${sign}${value}</span>`;
+                    })
+                    .join(', ');
+                
+                const racesText = kit.races.includes('all') ? 'Toutes' : kit.races.join(', ');
+                const isEnabled = kit.enabled !== false; // Par défaut, tous sont activés
+                
+                // Construire le texte des prérequis (nouveau format: prerequisites)
+                let requirementsText = '-';
+                if (kit.prerequisites && kit.prerequisites.length > 0) {
+                    requirementsText = kit.prerequisites.join(' <strong>OU</strong> ');
+                }
+                
+                html += `
+                    <tr class="${isEnabled ? '' : 'disabled-row'}">
+                        <td style="text-align: center;">
+                            <input type="checkbox" 
+                                   id="kit-${kit.id}" 
+                                   ${isEnabled ? 'checked' : ''} 
+                                   onchange="toggleKit(${kit.id})"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                        </td>
+                        <td><strong>${kit.name}</strong></td>
+                        <td><span class="slot-badge">${kit.slot}</span></td>
+                        <td>${kit.cost === 0 ? '<strong>0 (unique)</strong>' : kit.cost + ' pts'}</td>
+                        <td>${kit.races.includes('all') ? 'Toutes' : kit.races.map(r => `<span class="race-badge">${r}</span>`).join('')}</td>
+                        <td style="font-size: 0.9em;">${requirementsText}</td>
+                        <td>${statsText}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function toggleKit(kitId) {
+            const kit = kits.find(k => k.id === kitId);
+            if (kit) {
+                kit.enabled = document.getElementById(`kit-${kitId}`).checked;
+                displayKits(); // Rafraîchir l'affichage
+            }
+        }
+
+        function toggleAllKits(enable) {
+            kits.forEach(kit => {
+                kit.enabled = enable;
+                const checkbox = document.getElementById(`kit-${kit.id}`);
+                if (checkbox) {
+                    checkbox.checked = enable;
+                }
+            });
+            displayKits(); // Rafraîchir l'affichage
+        }
+
+        function optimizeEquipment() {
+            const selectedRace = document.getElementById('race-select').value;
+            const selectedStatus = document.getElementById('status-select').value;
+            
+            // Récupérer les talents sélectionnés
+            const selectedTalents = [];
+            const talentsList = ['genie', 'scientifique', 'sain', 'geek', 'urgentiste', 'peau', 'ingenieur', 'brute', 'rodeur', 'felin', 'polyvalent'];
+            talentsList.forEach(talent => {
+                const checkbox = document.getElementById(`talent-${talent}`);
+                if (checkbox && checkbox.checked) {
+                    selectedTalents.push(checkbox.value);
+                }
+            });
+
+            // Récupérer les institutions sélectionnées
+            const selectedInstitutions = [];
+            if (document.getElementById('inst-dreadcast').checked) {
+                selectedInstitutions.push('DreadCast Network');
+            }
+            if (document.getElementById('inst-orient').checked) {
+                selectedInstitutions.push('Cercle de l\'Orient');
+            }
+
+            // Récupérer les titres sélectionnés
+            const selectedTitles = [];
+            if (document.getElementById('title-vu').checked) {
+                selectedTitles.push('J\'en ai vu d\'autres');
+            }
+            if (document.getElementById('title-collec').checked) {
+                selectedTitles.push('Collectionneur de cadavres');
+            }
+
+            // Récupérer les accomplissements (valeurs numériques)
+            const playerAccomplishments = {
+                'Technicien': parseInt(document.getElementById('accomp-technicien').value),
+                'Directeur': parseInt(document.getElementById('accomp-directeur').value),
+                'Vendeur': parseInt(document.getElementById('accomp-vendeur').value),
+                'Fidèle': parseInt(document.getElementById('accomp-fidele').value),
+                'Fantassin': parseInt(document.getElementById('accomp-fantassin').value)
+            };
+
+            // Récupérer les statistiques natives du joueur
+            const nativeStats = {
+                force: parseInt(document.getElementById('native-force').value) || 0,
+                agilite: parseInt(document.getElementById('native-agilite').value) || 0,
+                resistance: parseInt(document.getElementById('native-resistance').value) || 0,
+                perception: parseInt(document.getElementById('native-perception').value) || 0,
+                furtivite: parseInt(document.getElementById('native-furtivite').value) || 0,
+                informatique: parseInt(document.getElementById('native-informatique').value) || 0,
+                medecine: parseInt(document.getElementById('native-medecine').value) || 0,
+                ingenierie: parseInt(document.getElementById('native-ingenierie').value) || 0
+            };
+            
+            // Récupérer les stats sélectionnées avec leurs priorités
+            const selectedStats = [];
+            const statPriorities = {};
+            
+            const stats = ['force', 'agilite', 'resistance', 'perception', 'furtivite', 
+                          'informatique', 'medecine', 'ingenierie', 'sante', 'forme', 'vitesse'];
+            
+            stats.forEach(stat => {
+                const checkbox = document.getElementById(`stat-${stat}`);
+                const prioritySelect = document.getElementById(`priority-${stat}`);
+                
+                if (checkbox.checked) {
+                    selectedStats.push(stat);
+                    statPriorities[stat] = parseInt(prioritySelect.value);
+                }
+            });
+            
+            if (selectedStats.length === 0) {
+                alert('Veuillez sélectionner au moins une statistique !');
+                return;
+            }
+
+            // Créer l'objet du profil du personnage
+            const characterProfile = {
+                race: selectedRace,
+                status: selectedStatus,
+                talents: selectedTalents,
+                institutions: selectedInstitutions,
+                titles: selectedTitles,
+                accomplishments: playerAccomplishments
+            };
+
+            // Filtrer les kits disponibles selon tous les critères
+            const availableKits = kits.filter(kit => {
+                // Vérifier si le kit est activé
+                if (kit.enabled === false) return false;
+                
+                // Vérifier la race
+                const raceOk = kit.races.includes('all') || 
+                               selectedRace === 'all' || 
+                               kit.races.includes(selectedRace);
+                
+                if (!raceOk) return false;
+                
+                // Vérifier si le kit apporte au moins une stat recherchée
+                const hasRelevantStat = Object.keys(kit.stats).some(stat => 
+                    selectedStats.includes(stat)
+                );
+                
+                if (!hasRelevantStat) return false;
+
+                // Vérifier les prérequis (nouveau format: liste de strings séparés par OU)
+                if (kit.prerequisites && kit.prerequisites.length > 0) {
+                    // Créer une liste de tous les prérequis possédés par le joueur
+                    const playerPrerequisites = new Set();
+                    
+                    // Ajouter la race
+                    if (selectedRace !== 'all') {
+                        // Ajouter la race en minuscule (comme dans le select)
+                        playerPrerequisites.add(selectedRace);
+                        
+                        // Ajouter aussi la version avec majuscule (comme dans les prérequis des kits)
+                        const raceCapitalized = selectedRace.charAt(0).toUpperCase() + selectedRace.slice(1);
+                        playerPrerequisites.add(raceCapitalized);
+                    }
+                    
+                    // Ajouter le statut
+                    if (selectedStatus !== 'all') {
+                        playerPrerequisites.add(selectedStatus);
+                        
+                        // Gérer les variantes orthographiques du statut
+                        // "Haut-Dignitaire" (interface) → "Haut Dignitaire" (kits)
+                        if (selectedStatus === 'Haut-Dignitaire') {
+                            playerPrerequisites.add('Haut Dignitaire');
+                        }
+                        // "Délégué Impérial" peut avoir des variantes
+                        if (selectedStatus === 'Délégué Impérial') {
+                            playerPrerequisites.add('Delégué Impérial'); // sans accent
+                        }
+                    }
+                    
+                    // Ajouter les talents
+                    selectedTalents.forEach(t => playerPrerequisites.add(t));
+                    
+                    // Ajouter les institutions
+                    selectedInstitutions.forEach(i => playerPrerequisites.add(i));
+                    
+                    // Ajouter les titres
+                    selectedTitles.forEach(t => playerPrerequisites.add(t));
+                    
+                    // Ajouter les accomplissements avec leur niveau
+                    // Hiérarchie : 0=Aucun, 1=Débutant, 2=Initié, 3=Habitué, 4=Expérimenté, 5=Confirmé, 6=Expert, 7=Légendaire
+                    if (playerAccomplishments.Technicien >= 2) playerPrerequisites.add('Technicien Initié');
+                    if (playerAccomplishments.Technicien >= 3) playerPrerequisites.add('Technicien Habitué');
+                    if (playerAccomplishments.Technicien >= 6) playerPrerequisites.add('Technicien Expert');
+                    
+                    if (playerAccomplishments.Directeur >= 2) playerPrerequisites.add('Directeur Initié');
+                    if (playerAccomplishments.Directeur >= 3) playerPrerequisites.add('Directeur Habitué');
+                    if (playerAccomplishments.Directeur >= 3) playerPrerequisites.add('Directeur habitué'); // Variante
+                    if (playerAccomplishments.Directeur >= 6) playerPrerequisites.add('Directeur Expert');
+                    
+                    if (playerAccomplishments.Vendeur >= 2) playerPrerequisites.add('Vendeur Initié');
+                    if (playerAccomplishments.Vendeur >= 5) playerPrerequisites.add('Vendeur Confirmé');
+                    if (playerAccomplishments.Vendeur >= 6) playerPrerequisites.add('Vendeur Expert');
+                    
+                    if (playerAccomplishments.Fidèle >= 2) playerPrerequisites.add('Fidèle Initié');
+                    if (playerAccomplishments.Fidèle >= 3) playerPrerequisites.add('Fidèle habitué'); // Variante avec minuscule
+                    if (playerAccomplishments.Fidèle >= 6) playerPrerequisites.add('Fidèle Expert');
+                    
+                    if (playerAccomplishments.Fantassin >= 2) playerPrerequisites.add('Fantassin Initié');
+                    if (playerAccomplishments.Fantassin >= 3) playerPrerequisites.add('Fantassin Habitué');
+                    if (playerAccomplishments.Fantassin >= 6) playerPrerequisites.add('Fantassin Expert');
+                    
+                    // Gérer les prérequis composés (avec "et")
+                    // "Impérial et Citoyen" - il faut les deux
+                    if (playerPrerequisites.has('Impérial') && playerPrerequisites.has('Citoyen')) {
+                        playerPrerequisites.add('Impérial et Citoyen');
+                    }
+                    
+                    // Variante orthographique "Peau d'argent" (minuscule)
+                    if (playerPrerequisites.has("Peau d'Argent")) {
+                        playerPrerequisites.add("Peau d'argent");
+                    }
+                    
+                    // Vérifier si AU MOINS UN des prérequis du kit est possédé (logique OU)
+                    const meetsRequirements = kit.prerequisites.some(prereq => 
+                        playerPrerequisites.has(prereq)
+                    );
+                    
+                    // DEBUG: afficher pour le kit Chirurgien
+                    if (kit.name === "Chirurgien") {
+                        console.log(`[DEBUG] Kit Chirurgien (${kit.slot}):`, {
+                            prerequisites: kit.prerequisites,
+                            playerHas: Array.from(playerPrerequisites),
+                            meetsRequirements: meetsRequirements
+                        });
+                    }
+                    
+                    if (!meetsRequirements) return false;
+                }
+                
+                return true;
+            });
+
+            // Optimiser pour chaque emplacement
+            const slots = ['tete', 'buste', 'jambes', 'pieds', 'secondaire'];
+            const optimization = {};
+            const totalStats = {};
+
+            // Initialiser les stats totales
+            selectedStats.forEach(stat => totalStats[stat] = 0);
+            totalStats.sante = 0;
+            totalStats.forme = 0;
+            totalStats.vitesse = 0;
+
+            slots.forEach(slot => {
+                // Trouver tous les équipements disponibles pour ce slot
+                const slotEquipments = equipments.filter(eq => {
+                    // Doit être activé
+                    if (eq.enabled === false) return false;
+                    
+                    // Doit correspondre au slot
+                    if (eq.slot !== slot) return false;
+                    
+                    // Doit avoir les stats natives requises
+                    if (!hasNativeStats(nativeStats, eq.nativeStatsRequired)) return false;
+                    
+                    return true;
+                });
+                
+                // Évaluer chaque équipement avec ses kits optimaux
+                let bestCombination = null;
+                let bestPrimaryScore = -Infinity;
+                let bestSecondaryScore = -Infinity;
+
+                slotEquipments.forEach(eq => {
+                    // Optimiser les kits pour cet équipement
+                    const slotKits = availableKits.filter(kit => kit.slot === slot);
+                    const optimizedKits = optimizeKitsForEquipment(eq, slotKits, selectedStats, statPriorities);
+                    
+                    // Calculer le score PRIMAIRE (stats recherchées)
+                    let primaryScore = 0;
+                    
+                    // Score primaire de l'équipement
+                    Object.entries(eq.stats).forEach(([stat, value]) => {
+                        if (selectedStats.includes(stat)) {
+                            const priority = statPriorities[stat] || 1;
+                            primaryScore += value * priority;
+                        }
+                    });
+                    
+                    // Score primaire des kits
+                    optimizedKits.forEach(kitInfo => {
+                        Object.entries(kitInfo.kit.stats).forEach(([stat, value]) => {
+                            if (selectedStats.includes(stat)) {
+                                const priority = statPriorities[stat] || 1;
+                                primaryScore += value * kitInfo.quantity * priority;
+                            }
+                        });
+                    });
+                    
+                    // Calculer le score SECONDAIRE (stats NON recherchées = bonus)
+                    let secondaryScore = 0;
+                    
+                    // Score secondaire de l'équipement
+                    Object.entries(eq.stats).forEach(([stat, value]) => {
+                        if (!selectedStats.includes(stat)) {
+                            // Les bonus comptent positivement, les malus négativement
+                            secondaryScore += value;
+                        }
+                    });
+                    
+                    // Score secondaire des kits
+                    optimizedKits.forEach(kitInfo => {
+                        Object.entries(kitInfo.kit.stats).forEach(([stat, value]) => {
+                            if (!selectedStats.includes(stat)) {
+                                secondaryScore += value * kitInfo.quantity;
+                            }
+                        });
+                    });
+                    
+                    // Garder la meilleure combinaison
+                    // Priorité 1 : Score primaire (stats recherchées)
+                    // Priorité 2 : Score secondaire (bonus sur autres stats)
+                    // Priorité 3 : Équipement non-premium (✤, ★, ◆) si scores similaires
+                    
+                    // Vérifier si l'équipement actuel ou le meilleur est premium
+                    const currentIsPremium = eq.premium || eq.name.match(/^[✤★◆]/);
+                    const bestIsPremium = bestCombination ? 
+                        (bestCombination.equipment.premium || bestCombination.equipment.name.match(/^[✤★◆]/)) : 
+                        false;
+                    
+                    const isBetter = primaryScore > bestPrimaryScore || 
+                                    (primaryScore === bestPrimaryScore && secondaryScore > bestSecondaryScore) ||
+                                    (primaryScore === bestPrimaryScore && secondaryScore === bestSecondaryScore && bestIsPremium && !currentIsPremium);
+                    
+                    if (isBetter) {
+                        bestPrimaryScore = primaryScore;
+                        bestSecondaryScore = secondaryScore;
+                        bestCombination = {
+                            equipment: eq,
+                            kits: optimizedKits
+                        };
+                    }
+                });
+
+                // Appliquer la meilleure combinaison
+                if (bestCombination) {
+                    // Ajouter les stats de l'équipement
+                    Object.entries(bestCombination.equipment.stats).forEach(([stat, value]) => {
+                        if (!totalStats[stat]) totalStats[stat] = 0;
+                        totalStats[stat] += value;
+                    });
+
+                    // Ajouter les stats des kits
+                    bestCombination.kits.forEach(kitInfo => {
+                        Object.entries(kitInfo.kit.stats).forEach(([stat, value]) => {
+                            if (!totalStats[stat]) totalStats[stat] = 0;
+                            totalStats[stat] += value * kitInfo.quantity;
+                        });
+                    });
+
+                    optimization[slot] = bestCombination;
+                }
+            });
+
+            displayOptimizationResults(optimization, totalStats, selectedStats, playerAccomplishments);
+        }
+
+        function optimizeKitsForEquipment(equipment, availableKits, priorityStats, statPriorities) {
+            const techPoints = equipment.techPoints;
+            let remainingPoints = techPoints;
+            const selectedKits = [];
+            let hasRacialKit = false;
+
+            // D'abord, installer un kit racial à 0 coût s'il y en a un
+            const racialKit = availableKits.find(kit => kit.cost === 0);
+            if (racialKit && !hasRacialKit) {
+                selectedKits.push({ kit: racialKit, quantity: 1 });
+                hasRacialKit = true;
+            }
+
+            // Ensuite, optimiser avec les autres kits
+            const regularKits = availableKits.filter(kit => kit.cost > 0);
+            
+            // Trier les kits par efficacité (stats recherchées pondérées par priorité / coût)
+            const sortedKits = regularKits.map(kit => {
+                let weightedStats = 0;
+                Object.entries(kit.stats).forEach(([stat, value]) => {
+                    if (priorityStats.includes(stat)) {
+                        const priority = statPriorities[stat] || 1;
+                        // Multiplier la valeur par la priorité
+                        weightedStats += value * priority;
+                    }
+                    // Les stats non recherchées sont complètement ignorées
+                });
+                return {
+                    kit: kit,
+                    efficiency: kit.cost > 0 ? weightedStats / kit.cost : weightedStats
+                };
+            }).sort((a, b) => b.efficiency - a.efficiency);
+
+            // Algorithme glouton pour remplir les points tech
+            sortedKits.forEach(({ kit }) => {
+                if (kit.cost <= remainingPoints && kit.cost > 0) {
+                    const maxQuantity = Math.floor(remainingPoints / kit.cost);
+                    if (maxQuantity > 0) {
+                        const existing = selectedKits.find(sk => sk.kit.id === kit.id);
+                        if (existing) {
+                            existing.quantity += maxQuantity;
+                        } else {
+                            selectedKits.push({ kit: kit, quantity: maxQuantity });
+                        }
+                        remainingPoints -= kit.cost * maxQuantity;
+                    }
+                }
+            });
+
+            return selectedKits;
+        }
+
+        function displayOptimizationResults(optimization, totalStats, selectedStats, playerAccomplishments) {
+            const resultsDiv = document.getElementById('optimization-results');
+            const statsDiv = document.getElementById('stats-summary');
+            
+            let html = '';
+            const slots = ['tete', 'buste', 'jambes', 'pieds', 'secondaire'];
+            const slotNames = {
+                'tete': '🎭 Tête',
+                'buste': '🛡️ Buste',
+                'jambes': '👖 Jambes',
+                'pieds': '👢 Pieds',
+                'secondaire': '🤚 Secondaire'
+            };
+
+            slots.forEach(slot => {
+                if (optimization[slot]) {
+                    const { equipment, kits } = optimization[slot];
+                    
+                    html += `
+                        <div class="equipment-slot">
+                            <h3>${slotNames[slot]}</h3>
+                            <div class="equipment-info">
+                                <div class="equipment-name">${equipment.name}</div>
+                                <div class="tech-points">Points technologiques: ${equipment.techPoints}</div>
+                                <div style="margin-top: 5px;">
+                                    ${Object.entries(equipment.stats).map(([stat, val]) => {
+                                        const sign = val >= 0 ? '+' : '';
+                                        const color = val >= 0 ? '#667eea' : '#dc3545';
+                                        return `<span style="color: ${color}">${stat}: ${sign}${val}</span>`;
+                                    }).join(' | ')}
+                                </div>
+                            </div>
+                    `;
+                    
+                    if (kits.length > 0) {
+                        html += '<div class="kit-list">';
+                        let usedPoints = 0;
+                        
+                        kits.forEach(({ kit, quantity }) => {
+                            usedPoints += kit.cost * quantity;
+                            const statsText = Object.entries(kit.stats)
+                                .map(([stat, val]) => {
+                                    const totalVal = val * quantity;
+                                    const sign = totalVal >= 0 ? '+' : '';
+                                    const color = totalVal >= 0 ? '#667eea' : '#dc3545';
+                                    return `<span style="color: ${color}">${stat}: ${sign}${totalVal}</span>`;
+                                })
+                                .join(' | ');
+                            
+                            // Afficher les prérequis du kit (format prerequisites)
+                            let prerequisitesInfo = '';
+                            if (kit.prerequisites && kit.prerequisites.length > 0) {
+                                const prerequisitesText = kit.prerequisites.join(' <strong>OU</strong> ');
+                                prerequisitesInfo = `<div style="background: #e3f2fd; padding: 8px; margin-top: 5px; border-radius: 4px; font-size: 0.9em;">
+                                    📋 <strong>Prérequis :</strong> ${prerequisitesText}
+                                </div>`;
+                            }
+                            
+                            html += `
+                                <div class="kit-item">
+                                    <strong>${kit.name}</strong> ${quantity > 1 ? `x${quantity}` : ''} 
+                                    (${kit.cost === 0 ? 'Kit racial unique' : kit.cost * quantity + ' pts'})
+                                    <br><span style="color: #667eea;">${statsText}</span>
+                                    ${prerequisitesInfo}
+                                </div>
+                            `;
+                        });
+                        
+                        html += `<div style="margin-top: 10px; font-weight: 600; color: #764ba2;">
+                            Points utilisés: ${usedPoints} / ${equipment.techPoints}
+                        </div>`;
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                }
+            });
+
+            resultsDiv.innerHTML = html;
+
+            // Afficher le résumé des stats
+            let statsHtml = '<h3>📈 Statistiques Gagnées/Perdues</h3><div class="stats-grid">';
+            
+            const allStats = ['force', 'agilite', 'resistance', 'perception', 'furtivite', 
+                            'informatique', 'medecine', 'ingenierie', 'sante', 'forme', 'vitesse'];
+            
+            allStats.forEach(stat => {
+                if (totalStats[stat] && totalStats[stat] !== 0) {
+                    const statNames = {
+                        'force': '💪 Force',
+                        'agilite': '🤸 Agilité',
+                        'resistance': '🛡️ Résistance',
+                        'perception': '👁️ Perception',
+                        'furtivite': '🥷 Furtivité',
+                        'informatique': '💻 Informatique',
+                        'medecine': '⚕️ Médecine',
+                        'ingenierie': '🔧 Ingénierie',
+                        'sante': '❤️ Santé',
+                        'forme': '🏃 Forme',
+                        'vitesse': '⚡ Vitesse'
+                    };
+                    
+                    const sign = totalStats[stat] >= 0 ? '+' : '';
+                    
+                    // Ajouter un fond vert si la stat était recherchée
+                    const isSelected = selectedStats.includes(stat);
+                    const bgStyle = isSelected ? 'background: #28a745; border-left: 4px solid #1e7e34; color: white; font-weight: 600;' : '';
+                    
+                    statsHtml += `
+                        <div class="stat-item" style="${bgStyle}">
+                            <div class="stat-name">${statNames[stat]}</div>
+                            <div class="stat-value">${sign}${totalStats[stat]}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            statsHtml += '</div>';
+            statsDiv.innerHTML = statsHtml;
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Initialisation au chargement de la page
+        window.addEventListener('DOMContentLoaded', () => {
+            displayEquipments();
+            initializePrioritySelectors();
+        });
+    </script>
+</body>
+</html>
